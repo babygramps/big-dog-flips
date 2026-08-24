@@ -26,6 +26,16 @@ Existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` v
 npm run dev
 ```
 
+While the dev server is running, add a `days` query parameter to inspect the Home screen at a different point in the schedule:
+
+```text
+http://localhost:5173/?days=-1  # one day ago
+http://localhost:5173/?days=-2  # two days ago
+http://localhost:5173/?days=1   # one day ahead
+```
+
+The override only works in Vite development mode; production ignores it. It changes the app's clock, not its database connection, so voting, commenting, and playlist controls still write to whichever Supabase project `.env.local` configures. Automatic side assignment is disabled while a day offset is active.
+
 ## Build
 
 ```bash

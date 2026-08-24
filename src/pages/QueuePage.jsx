@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
@@ -330,34 +331,28 @@ function HistoryRound({ row, songs, votes, groups, groupSongs, roundGroups }) {
     groupSongs: groupSongs.filter(item => groupIds.has(item.group_id)),
     sideByPlayerId: sides.isSplit ? sides.sideByPlayerId : null,
   })
-  const top = rankEntries(entries).slice(0, 4)
+  const top = rankEntries(entries)[0]
 
   return (
-    <details className="history-round">
-      <summary>
-        <span>
+    <Link className="history-round history-round-link" to={`/rounds/${row.round.id}`}>
+      <div className="history-round-main">
+        <span className="history-round-title">
           <strong>{row.round.theme_name}</strong>
           <small>Week of {formatPacificDate(row.timing.weekStart)}</small>
         </span>
-        <span className="soft-tag">{entries.length} songs</span>
-      </summary>
-      <div className="history-list">
-        {top.length === 0 ? (
-          <p className="muted">No songs were submitted.</p>
-        ) : top.map(entry => (
-          <div className="history-row" key={entry.id}>
-            <span className="song-number">{entry.rank}</span>
-            <div>
-              <strong>{entry.title}</strong>
-              <p>
-                {entry.artist} · {entrySubmitterText(entry)}
-                {entry.side !== null && entry.side !== undefined ? ` · ${groupLabel(entry.side)}` : ''}
-              </p>
-            </div>
-            <span className="score-mini">{entry.totalPoints}</span>
-          </div>
-        ))}
+        <p className="history-round-preview">
+          {top ? (
+            <>
+              <span>Top song</span> {top.title} · {entrySubmitterText(top)}
+              {top.side !== null && top.side !== undefined ? ` · ${groupLabel(top.side)}` : ''}
+            </>
+          ) : 'No songs were submitted.'}
+        </p>
       </div>
-    </details>
+      <div className="history-round-action">
+        <span className="soft-tag">{songs.length} song{songs.length === 1 ? '' : 's'}</span>
+        <span className="history-round-arrow" aria-hidden="true">→</span>
+      </div>
+    </Link>
   )
 }

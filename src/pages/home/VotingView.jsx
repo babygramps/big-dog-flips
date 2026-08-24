@@ -47,6 +47,7 @@ export default function VotingView({
   const activePlaylists = playlists.filter(playlist => playlist.group_index === activeSide)
   const mySidePlayers = mySide === null ? activePlayers : allPlayers.filter(row => sides.sideByPlayerId[row.id] === mySide)
   const otherSidePlayers = otherSide === null ? [] : allPlayers.filter(row => sides.sideByPlayerId[row.id] === otherSide)
+  const submittedIds = new Set([...songs, ...otherSideSongs].map(song => song.player_id))
   const {
     adjustVote,
     draftVotes,
@@ -93,17 +94,37 @@ export default function VotingView({
             <p className="eyebrow">This round's sides</p>
             <div className="voting-side-roster">
               <h3 className={`side-name side-${mySide}`}>{groupLabel(mySide)}</h3>
-              <SideRoster players={mySidePlayers} completedIds={voters} currentPlayerId={player.id} />
+              <SideRoster
+                players={mySidePlayers}
+                submittedIds={submittedIds}
+                completedIds={voters}
+                currentPlayerId={player.id}
+                showSubmissionStatus
+                showVoteStatus
+              />
             </div>
             <div className="voting-side-roster is-other">
               <h3 className={`side-name side-${otherSide}`}>{groupLabel(otherSide)}</h3>
-              <SideRoster players={otherSidePlayers} currentPlayerId={player.id} muted />
+              <SideRoster
+                players={otherSidePlayers}
+                submittedIds={submittedIds}
+                currentPlayerId={player.id}
+                showSubmissionStatus
+                muted
+              />
             </div>
           </div>
         )}
         {(mySide === null || mySide === undefined) && (
           <div className="voting-sides">
-            <SideRoster players={activePlayers} completedIds={voters} currentPlayerId={player.id} />
+            <SideRoster
+              players={activePlayers}
+              submittedIds={submittedIds}
+              completedIds={voters}
+              currentPlayerId={player.id}
+              showSubmissionStatus
+              showVoteStatus
+            />
           </div>
         )}
         <AnonymousPersonaCard name={myAnonymousName} />

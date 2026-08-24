@@ -8,6 +8,7 @@ import AdminPage from './pages/SettingsPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import JoinScreen from './pages/JoinScreen.jsx'
 import Nav from './components/Nav.jsx'
+import PastRoundPage from './pages/PastRoundPage.jsx'
 import PlayerPage from './pages/PlayerPage.jsx'
 import PlayerListPage from './pages/PlayerListPage.jsx'
 import RoundsPage from './pages/QueuePage.jsx'
@@ -160,6 +161,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/rounds" element={<RoundsPage />} />
+            <Route path="/rounds/:roundId" element={<PastRoundPage />} />
             <Route path="/players" element={<PlayerListPage />} />
             <Route path="/players/:playerId" element={<PlayerPage />} />
             <Route path="/admin" element={<AdminPage />} />

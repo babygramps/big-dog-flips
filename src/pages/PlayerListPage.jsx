@@ -41,7 +41,6 @@ export default function PlayerListPage() {
       return {
         ...row,
         total: score?.total || 0,
-        byRound: score?.byRound || {},
       }
     })
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
@@ -78,9 +77,11 @@ export default function PlayerListPage() {
         <div>
           <p className="eyebrow">Season standings</p>
           <h1>Players</h1>
-          <p>Standings, profiles, and songs in one place.</p>
+          <p>Standings and profiles. Open a past round in Rounds for its full scorecard.</p>
         </div>
-        <span className="soft-tag">{scoredRounds.length} scored rounds</span>
+        <Link className="btn btn-secondary btn-sm" to="/rounds">
+          Past rounds ({scoredRounds.length})
+        </Link>
       </section>
 
       {leader ? (
@@ -133,36 +134,6 @@ export default function PlayerListPage() {
           </div>
         )}
       </section>
-
-      {scoredRounds.length > 0 && (
-        <section className="round-breakdown">
-          <div className="section-heading">
-            <h2>Round breakdown</h2>
-          </div>
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  {scoredRounds.map(round => <th key={round.id}>{round.theme_name}</th>)}
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rankedPlayers.map(row => (
-                  <tr key={row.id}>
-                    <td>{row.name}</td>
-                    {scoredRounds.map(round => (
-                      <td key={round.id}>{row.byRound[round.id] || '-'}</td>
-                    ))}
-                    <td><strong>{row.total}</strong></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
     </main>
   )
 }

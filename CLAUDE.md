@@ -56,8 +56,8 @@ A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two si
 
 - Sides live in `round_groups` and are assigned once, when the round becomes current. Whoever opens the app first writes them through the `assign_round_groups` RPC, which is first-writer-wins, so simultaneous clients cannot produce two different splits.
 - `src/lib/groups.js` picks the split by minimising how often the same pair lands together, which keeps season-long pairings even. Do not replace it with a plain shuffle.
-- Voting is scoped to your own side. A tab on the voting screen exposes the other side's songs for listening and commenting, with no vote controls and no scores. Song comments follow their song; the general round thread stays on your own side, following its author.
-- Appreciation reveals both sides in one ranking. The winner is the top scorer across either side.
+- Voting is scoped to your own side. A tab on the voting screen exposes the other side's songs for listening and commenting, with no vote controls and no scores. Song comments follow their song; the general round thread stays on your own side, following its author. The sidebar identifies players who did not submit; vote progress remains visible only for the voter's own side.
+- Appreciation keeps one overall ranking, with the winner determined across both sides, but exposes each side's songs through the same Side A / Side B tabs. Its sidebar shows the final submission and voting status for every assigned player.
 - Duplicate merges may not span sides, enforced in both `create_duplicate_merge` and the admin tool.
 - Late joiners go to the smaller side via `join_round_group`. Sides are never rebalanced mid-round.
 - Below the threshold, or before the migration is applied, the round runs as a single pool exactly as it did before.
@@ -75,8 +75,8 @@ A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two si
 Four routes, all under `src/pages/`:
 
 - `/` — Home: the current round, its phase, a countdown, and the submission, voting, or appreciation view from `src/pages/home/`.
-- `/rounds` — queue, current round, and past results. Defined in `src/pages/QueuePage.jsx`, which exports `RoundsPage`; the filename predates the rename.
-- `/players` — player directory, profile editing, and season standings. **Standings live here.** There is no leaderboard page; `/leaderboard` redirects to this route.
+- `/rounds` — queue, current round, and the past-round archive. Defined in `src/pages/QueuePage.jsx`, which exports `RoundsPage`; the filename predates the rename. Each archive card links to `/rounds/:roundId`, whose full scorecard reuses the appreciation results UI, including side rosters and final submission/voting status.
+- `/players` — player directory, profile editing, and season standings. **Standings live here.** Round-by-round results live in the past-round archive rather than a standings table. There is no leaderboard page; `/leaderboard` redirects to this route.
 - `/admin` — league settings, schedule editor, duplicate merge tool, and player activation. `AdminUnlock` is a slide-to-confirm gesture guarding against accidental taps, not a password.
 
 The remaining Season 1 paths (`/queue`, `/archive`, `/history`, `/settings`) redirect into those four.

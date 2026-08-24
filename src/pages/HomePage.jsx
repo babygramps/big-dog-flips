@@ -10,19 +10,39 @@ import AppreciationView from './home/AppreciationView.jsx'
 import SubmissionView from './home/SubmissionView.jsx'
 import VotingView from './home/VotingView.jsx'
 
-function useNow() {
-  const [now, setNow] = useState(new Date())
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60000)
-    return () => clearInterval(id)
-  }, [])
+function getDevDayOffset() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return 0
+
+  const value = new URLSearchParams(window.location.search).get('days')
+  if (value === null || value.trim() === '') return 0
+
+  const offset = Number(value)
+  return Number.isSafeInteger(offset) ? offset : 0
+}
+
+function nowWithDayOffset(dayOffset) {
+  const now = new Date()
+  now.setDate(now.getDate() + dayOffset)
   return now
+}
+
+function useNow() {
+  const dayOffset = getDevDayOffset()
+  const [now, setNow] = useState(() => nowWithDayOffset(dayOffset))
+
+  useEffect(() => {
+    setNow(nowWithDayOffset(dayOffset))
+    const id = setInterval(() => setNow(nowWithDayOffset(dayOffset)), 60000)
+    return () => clearInterval(id)
+  }, [dayOffset])
+
+  return { now, dayOffset }
 }
 
 export default function HomePage() {
   const { player } = usePlayer()
   const { settings } = useSettings()
-  const now = useNow()
+  const { now, dayOffset } = useNow()
   const { data, loading, reload } = useRealtimeData({
     channelName: 'home-season-2',
     fetcher: fetchHomeData,
@@ -44,7 +64,8 @@ export default function HomePage() {
   // The RPC is first-writer-wins, so a race between two clients cannot produce two splits.
   const settledRoundsRef = useRef(new Set())
   useEffect(() => {
-    if (loading || !currentRound) return
+    // Time travel is for inspecting existing rounds, never for mutating their assignments.
+    if (dayOffset !== 0 || loading || !currentRound) return
 
     const roundId = currentRound.id
     const needsAssignment = !sides.isSplit && shouldSplitRound(activePlayers.length)
@@ -78,7 +99,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reload])
+  }, [dayOffset, loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reload])
 
   const roundData = useMemo(() => {
     if (!currentRound) return null
@@ -157,6 +178,9 @@ export default function HomePage() {
 
   const timing = getRoundTiming(currentRound, context.currentRoundIndex, settings, now)
   const awaitingSides = sides.isSplit && mySide === null
+  const appreciationPlayers = sides.isSplit
+    ? data.players.filter(row => sides.sideByPlayerId[row.id] === 0 || sides.sideByPlayerId[row.id] === 1)
+    : activePlayers
 
   return (
     <main className="page">
@@ -228,6 +252,7 @@ export default function HomePage() {
               duplicateGroups={roundData.roundGroups}
               groupSongs={roundData.roundGroupSongs}
               playlists={roundData.roundPlaylists}
+              allPlayers={appreciationPlayers}
               sides={sides}
               onChanged={reload}
             />
