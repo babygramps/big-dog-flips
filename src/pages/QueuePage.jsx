@@ -4,9 +4,7 @@ import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_ROUNDS_DATA, fetchRoundsData, ROUNDS_REALTIME_TABLES } from '../lib/data.js'
-import { groupLabel, sidesForRound } from '../lib/groups.js'
 import { addRound, deleteRound, moveUpcomingRound, updateRoundTheme } from '../lib/mutations.js'
-import { buildSongEntries, entrySubmitterText, rankEntries } from '../lib/scoring.js'
 import { formatPacificDate, getLeagueContext, getRoundState, getRoundTiming, PHASES } from '../lib/schedule.js'
 
 export default function RoundsPage() {
@@ -228,10 +226,6 @@ export default function RoundsPage() {
             key={row.round.id}
             row={row}
             songs={data.songs.filter(song => song.round_id === row.round.id)}
-            votes={data.votes.filter(vote => vote.round_id === row.round.id)}
-            groups={data.groups.filter(group => group.round_id === row.round.id)}
-            groupSongs={data.groupSongs}
-            roundGroups={data.roundGroups}
           />
         ))}
       </RoundSection>
@@ -265,13 +259,11 @@ function RoundCard({ row, currentPhase, controls, manage }) {
 
   return (
     <article className={`round-card ${state}`}>
-      <div className="round-artifact" aria-hidden="true">
-        <span />
-        <strong>{state === 'current' ? 'PLAY' : state === 'upcoming' ? 'NEXT' : 'FILE'}</strong>
-        <span />
-      </div>
       <div className="round-card-main">
-        <span className={`phase-pill phase-${state === 'current' ? currentPhase : state === 'upcoming' ? 'off' : 'appreciation'}`}>{phaseLabel}</span>
+        <div className="round-card-topline">
+          <span className={`phase-pill phase-${state === 'current' ? currentPhase : state === 'upcoming' ? 'off' : 'appreciation'}`}>{phaseLabel}</span>
+          <span className="round-week">Week of {formatPacificDate(timing.weekStart)}</span>
+        </div>
         {manage?.editing ? (
           <form className="stack edit-round-form" onSubmit={event => { event.preventDefault(); manage.onSave() }}>
             <label>
@@ -307,7 +299,6 @@ function RoundCard({ row, currentPhase, controls, manage }) {
           </>
         )}
         <div className="round-meta">
-          <span>Week of {formatPacificDate(timing.weekStart)}</span>
           {round.players && (
             <span>
               <Avatar player={round.players} size="xs" />
@@ -321,37 +312,25 @@ function RoundCard({ row, currentPhase, controls, manage }) {
   )
 }
 
-function HistoryRound({ row, songs, votes, groups, groupSongs, roundGroups }) {
-  const groupIds = new Set(groups.map(group => group.id))
-  const sides = sidesForRound(roundGroups, row.round.id)
-  const entries = buildSongEntries({
-    songs,
-    votes,
-    duplicateGroups: groups,
-    groupSongs: groupSongs.filter(item => groupIds.has(item.group_id)),
-    sideByPlayerId: sides.isSplit ? sides.sideByPlayerId : null,
-  })
-  const top = rankEntries(entries)[0]
-
+function HistoryRound({ row, songs }) {
   return (
-    <Link className="history-round history-round-link" to={`/rounds/${row.round.id}`}>
-      <div className="history-round-main">
-        <span className="history-round-title">
-          <strong>{row.round.theme_name}</strong>
-          <small>Week of {formatPacificDate(row.timing.weekStart)}</small>
-        </span>
-        <p className="history-round-preview">
-          {top ? (
-            <>
-              <span>Top song</span> {top.title} · {entrySubmitterText(top)}
-              {top.side !== null && top.side !== undefined ? ` · ${groupLabel(top.side)}` : ''}
-            </>
-          ) : 'No songs were submitted.'}
-        </p>
-      </div>
-      <div className="history-round-action">
-        <span className="soft-tag">{songs.length} song{songs.length === 1 ? '' : 's'}</span>
-        <span className="history-round-arrow" aria-hidden="true">→</span>
+    <Link className="round-card history-round history-round-link past" to={`/rounds/${row.round.id}`}>
+      <div className="round-card-main">
+        <div className="round-card-topline">
+          <span className="phase-pill phase-appreciation">Past round</span>
+          <span className="round-week">Week of {formatPacificDate(row.timing.weekStart)}</span>
+        </div>
+        <h3>{row.round.theme_name}</h3>
+        <p>{row.round.theme_description}</p>
+        <div className="round-meta">
+          {row.round.players && (
+            <span>
+              <Avatar player={row.round.players} size="xs" />
+              Added by {row.round.players.name}
+            </span>
+          )}
+          <span className="soft-tag">{songs.length} song{songs.length === 1 ? '' : 's'}</span>
+        </div>
       </div>
     </Link>
   )

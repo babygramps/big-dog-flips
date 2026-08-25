@@ -1611,6 +1611,225 @@ select:focus {
   text-transform: uppercase;
 }
 
+/* Appreciation keeps score order without repeating a place number on every song. */
+.song-card.appreciation-song-card {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border-color: #dfd0e5;
+  background: var(--surface);
+  box-shadow: 0 12px 30px rgba(82, 45, 98, 0.09);
+}
+
+.appreciation-song-card:hover {
+  border-color: #d0bdd9;
+  box-shadow: 0 16px 34px rgba(82, 45, 98, 0.13);
+  transform: translateY(-2px);
+}
+
+.appreciation-song-card.top-entry {
+  border-color: var(--pink);
+  box-shadow: 6px 6px 0 var(--lemon), 0 16px 34px rgba(82, 45, 98, 0.13);
+}
+
+.appreciation-card-body {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem 1.1rem 0.9rem;
+}
+
+.appreciation-card-context {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.appreciation-card-context > div {
+  min-width: 0;
+}
+
+.appreciation-song-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+
+.appreciation-track-copy {
+  min-width: 0;
+}
+
+.appreciation-track-copy .section-heading {
+  justify-content: flex-start;
+  gap: 0.45rem;
+}
+
+.appreciation-track-copy h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.04;
+}
+
+.appreciation-track-copy .soft-tag {
+  min-height: 1.35rem;
+  border-width: 1px;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.6rem;
+}
+
+.appreciation-byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  margin-top: 0.18rem;
+}
+
+.appreciation-byline strong {
+  color: var(--ink);
+  font-size: 0.96rem;
+}
+
+.appreciation-byline span {
+  color: var(--quiet);
+  font-size: 0.82rem;
+}
+
+.appreciation-listen-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.55rem;
+  border: 1px solid var(--aqua);
+  border-radius: 999px;
+  background: var(--aqua-soft);
+  padding: 0.22rem 0.58rem 0.22rem 0.38rem;
+  color: #154151;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.appreciation-listen-link:hover {
+  background: #c4f2fc;
+  text-decoration: none;
+}
+
+.appreciation-listen-link:focus-visible {
+  outline: 2px solid var(--grape);
+  outline-offset: 2px;
+}
+
+.appreciation-listen-link svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.appreciation-song-card .score-badge {
+  min-width: 4.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.appreciation-song-card .score-badge strong {
+  font-size: 2.55rem;
+  letter-spacing: -0.04em;
+}
+
+.appreciation-song-card .score-badge span {
+  margin-top: 0.12rem;
+  color: var(--quiet);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.appreciation-submitters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+}
+
+.appreciation-submitter-label {
+  color: var(--quiet);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.appreciation-song-card .submitter-line {
+  gap: 0.35rem;
+  margin-top: 0;
+}
+
+.appreciation-song-card .submitter-line .appreciation-submitter {
+  gap: 0.3rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  padding: 0.18rem 0.48rem 0.18rem 0.24rem;
+  color: var(--ink);
+  font-size: 0.76rem;
+}
+
+.appreciation-song-card .note,
+.appreciation-song-card .merge-note {
+  margin-top: 0;
+  font-size: 0.84rem;
+}
+
+.appreciation-note {
+  color: #6d4a37;
+  font-style: italic;
+}
+
+.appreciation-merge-note {
+  font-family: var(--font-mono);
+  font-size: 0.7rem !important;
+}
+
+.appreciation-discussion {
+  display: grid;
+  gap: 0.65rem;
+  border-top: 1px solid var(--line);
+  background: #fffbfd;
+  padding: 0.75rem 1.1rem 0.9rem;
+}
+
+.appreciation-discussion-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--quiet);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.appreciation-song-card .comments-block {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.appreciation-song-card .comment-form input {
+  background: var(--surface);
+}
+
 .empty-state {
   display: grid;
   gap: 0.3rem;
@@ -1628,12 +1847,12 @@ select:focus {
 
 .round-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
   position: relative;
   overflow: hidden;
-  padding: 1rem;
+  padding: 0.75rem 0.85rem;
   transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
 }
 
@@ -1651,79 +1870,62 @@ select:focus {
 }
 
 .round-card.past {
-  background: #fff;
-  box-shadow: none;
+  background:
+    linear-gradient(135deg, rgba(141, 107, 255, 0.06), rgba(48, 199, 232, 0.05)),
+    #fff;
 }
 
 .round-card:hover {
   transform: translateY(-1px);
 }
 
-.round-artifact {
-  display: grid;
-  place-items: center;
-  flex: 0 0 4.4rem;
-  width: 4.4rem;
-  min-height: 4.8rem;
-  gap: 0.28rem;
-  border: 2px solid var(--ink);
-  border-radius: 6px;
-  background: var(--lemon-soft);
-  color: var(--ink);
-  box-shadow: 4px 4px 0 var(--line);
-  transform: rotate(-2deg);
-}
-
-.round-artifact span {
-  width: 2.7rem;
-  height: 0.42rem;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: #fff;
-}
-
-.round-artifact strong {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0;
-}
-
-.round-card.current .round-artifact {
-  background: var(--pink-soft);
-  box-shadow: 4px 4px 0 var(--lemon);
-}
-
-.round-card.upcoming .round-artifact {
-  background: var(--aqua-soft);
-  box-shadow: 4px 4px 0 var(--grape);
-}
-
-.round-card.past .round-artifact {
-  background: #fff;
-  color: var(--quiet);
-  box-shadow: 3px 3px 0 var(--line);
-}
-
 .round-card-main {
   display: grid;
-  gap: 0.35rem;
-  /* Take the space between the artifact and the controls. Without this the card's
-     space-between leaves a gap beside the artifact and squeezes the text column. */
+  gap: 0.24rem;
   flex: 1;
   min-width: 0;
 }
 
-/* Grid items stretch by default, which pulls a pill across the whole column.
-   Only applies where a pill sits directly in a grid; inside .hero-topline and
-   other flex rows it already hugs its text. */
-.round-card-main > .phase-pill,
 .hero-surface > .phase-pill {
   justify-self: start;
+}
+
+.round-card-topline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+}
+
+.round-card-topline .phase-pill {
+  min-height: 1.35rem;
+  border-width: 1px;
+  padding: 0.1rem 0.48rem;
+  font-size: 0.62rem;
+}
+
+.round-week {
+  color: var(--quiet);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.round-card h3 {
+  font-size: 1.28rem;
+}
+
+.round-card-main > p {
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
 .round-meta {
   flex-wrap: wrap;
   justify-content: flex-start;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.18rem;
 }
 
 .round-controls {
@@ -1731,16 +1933,22 @@ select:focus {
   gap: 0.4rem;
 }
 
+.round-card > .round-controls {
+  align-self: center;
+}
+
+.round-card > .round-controls .icon-btn {
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  font-size: 1rem;
+}
+
 .history-round {
-  overflow: hidden;
-  padding: 0.9rem 1rem;
+  border-color: var(--line);
 }
 
 .history-round-link {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
   color: inherit;
   text-decoration: none;
   transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
@@ -1753,62 +1961,20 @@ select:focus {
   transform: translateY(-1px);
 }
 
+.history-round-link:hover h3 {
+  text-decoration: underline;
+}
+
 .history-round-link:focus-visible {
   outline: 3px solid var(--grape);
   outline-offset: 3px;
 }
 
-.history-round-main {
-  display: grid;
-  min-width: 0;
-  gap: 0.4rem;
-}
-
-.history-round-title strong {
-  display: block;
-  overflow-wrap: anywhere;
-}
-
-.history-round small {
-  display: block;
-  color: var(--quiet);
-}
-
-.history-round-preview {
-  overflow-wrap: anywhere;
-  font-size: 0.86rem;
-}
-
-.history-round-preview > span {
-  color: var(--grape);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.history-round-action {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.history-round-arrow {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  background: var(--lemon);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-weight: 800;
-  transition: transform 0.14s ease;
-}
-
-.history-round-link:hover .history-round-arrow {
-  transform: translateX(2px);
+.history-round .soft-tag {
+  min-height: 1.3rem;
+  border-width: 1px;
+  padding: 0.08rem 0.42rem;
+  font-size: 0.6rem;
 }
 
 .past-round-back {
@@ -1991,27 +2157,33 @@ select:focus {
 
 .player-profile-stats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(5.4rem, 1fr));
+  grid-template-columns: repeat(3, minmax(5.1rem, 1fr));
   gap: 0.55rem;
 }
 
-.player-profile-stats span {
+.player-profile-stat {
+  appearance: none;
   display: grid;
   justify-items: center;
   border: 2px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
   padding: 0.7rem;
+  color: inherit;
+  font: inherit;
 }
 
-.player-profile-stats strong {
+.player-profile-stat strong {
   color: var(--pink);
   font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1;
 }
 
-.player-profile-stats small {
+.player-profile-stat small {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   color: var(--muted);
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -2019,8 +2191,157 @@ select:focus {
   text-transform: uppercase;
 }
 
+.fair-score-stat {
+  border-color: var(--grape);
+  background: linear-gradient(135deg, #fff, var(--grape-soft));
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.fair-score-stat:hover {
+  box-shadow: 3px 3px 0 var(--lemon);
+  transform: translateY(-1px);
+}
+
+.fair-score-stat:focus-visible {
+  outline: 3px solid var(--aqua);
+  outline-offset: 3px;
+}
+
+.fair-score-stat strong {
+  color: var(--grape);
+  font-size: 1.75rem;
+}
+
+.fair-score-stat small > span {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.fair-score-modal-backdrop {
+  position: fixed;
+  z-index: 35;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(20, 29, 39, 0.62);
+}
+
+.fair-score-modal {
+  position: relative;
+  display: grid;
+  gap: 0.85rem;
+  width: min(100%, 36rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(145deg, rgba(231, 221, 255, 0.72), rgba(217, 247, 255, 0.55) 48%, #fff 48%),
+    #fff;
+  padding: 1.25rem;
+  box-shadow: 7px 7px 0 var(--lemon);
+}
+
+.fair-score-modal h2 {
+  padding-right: 2.4rem;
+  font-size: 1.75rem;
+}
+
+.fair-score-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.fair-score-modal-close:focus-visible {
+  outline: 3px solid var(--aqua);
+  outline-offset: 2px;
+}
+
+.fair-score-equation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 0.65rem;
+}
+
+.fair-score-equation span {
+  border-radius: 999px;
+  background: var(--grape-soft);
+  padding: 0.25rem 0.5rem;
+  color: #4930a8;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.fair-score-equation b {
+  color: var(--pink);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.fair-score-details {
+  display: grid;
+  gap: 0.55rem;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.fair-score-details strong {
+  color: var(--ink);
+}
+
+.fair-score-example {
+  border-left: 4px solid var(--orange);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: #fff5ee;
+  padding: 0.55rem 0.7rem;
+  color: #6d4a37;
+  font-size: 0.84rem;
+}
+
+.fair-score-modal > .btn {
+  justify-self: start;
+}
+
 .player-submission-card .eyebrow {
   margin-bottom: 0.25rem;
+}
+
+.player-submission-theme {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .warning-panel {
@@ -2635,7 +2956,6 @@ select:focus {
   .hero-footer,
   .page-header,
   .results-row,
-  .round-card,
   .existing-merge {
     align-items: stretch;
     flex-direction: column;
@@ -2647,10 +2967,6 @@ select:focus {
 
   .hero-footer .countdown-card {
     justify-items: start;
-  }
-
-  .round-artifact {
-    align-self: flex-start;
   }
 
   .countdown-card,
@@ -2684,6 +3000,40 @@ select:focus {
     padding: 0.85rem;
   }
 
+  .song-card.appreciation-song-card {
+    padding: 0;
+  }
+
+  .round-card {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .round-card > .round-controls {
+    align-self: flex-end;
+  }
+
+  .appreciation-card-body {
+    padding-inline: 0.9rem;
+  }
+
+  .appreciation-song-header {
+    gap: 0.5rem;
+  }
+
+  .appreciation-song-card .score-badge {
+    min-width: 3.4rem;
+  }
+
+  .appreciation-song-card .score-badge strong {
+    font-size: 2.25rem;
+  }
+
+  .appreciation-discussion {
+    padding-inline: 0.9rem;
+  }
+
   .voting-song-card .voting-song-actions {
     grid-column: 1;
     grid-row: 2;
@@ -2694,14 +3044,6 @@ select:focus {
   .voting-song-card .vote-control {
     grid-column: 2;
     grid-row: 1 / 3;
-  }
-
-  .history-round-link {
-    grid-template-columns: 1fr;
-  }
-
-  .history-round-action {
-    justify-content: space-between;
   }
 
   .playlist-form {

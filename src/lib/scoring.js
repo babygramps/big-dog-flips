@@ -198,6 +198,111 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
     }))
 }
 
+// Experimental vanity score. Each submitter is treated as holding a complete ballot:
+// actual eligible votes stay as cast, while any unspent budget is divided evenly among
+// the entries they could vote for. The result is then compared with that entry's neutral
+// opportunity and returned to the familiar per-round points scale. This does not replace
+// buildLeaderboard or the official raw score anywhere in the app.
+export function buildFairScores({
+  songs = [],
+  votes = [],
+  duplicateGroups = [],
+  groupSongs = [],
+  roundGroups = [],
+  scoredRoundIds = new Set(),
+  pointsPerPlayer = 10,
+}) {
+  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const fairScores = {}
+
+  for (const roundId of scoredRoundIds || []) {
+    const roundSongs = songs.filter(song => song.round_id === roundId)
+    const roundVotes = votes.filter(vote => vote.round_id === roundId)
+    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
+    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
+    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const sideByPlayerId = Object.fromEntries(
+      roundGroups
+        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+        .map(row => [row.player_id, Number(row.group_index)])
+    )
+    const isSplit = Object.keys(sideByPlayerId).length > 0
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      votes: roundVotes,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+      sideByPlayerId: isSplit ? sideByPlayerId : null,
+    })
+    const entryBySongId = new Map()
+    const entriesByPool = new Map()
+
+    for (const entry of entries) {
+      const pool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+      if (!entriesByPool.has(pool)) entriesByPool.set(pool, [])
+      entriesByPool.get(pool).push(entry)
+      for (const songId of entry.member_song_ids || []) entryBySongId.set(songId, entry)
+    }
+
+    for (const [pool, poolEntries] of entriesByPool) {
+      const poolVotes = roundVotes.filter(vote => {
+        const entry = entryBySongId.get(vote.song_id)
+        if (!entry) return false
+        const entryPool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+        return entryPool === pool
+      })
+      // A submitter who skips voting must still contribute a neutral ballot. People who
+      // did not submit only enter the pool if they actually cast at least one point.
+      const participantIds = new Set(poolEntries.flatMap(entry => entry.submitterIds || []))
+      for (const vote of poolVotes) {
+        if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
+      }
+
+      const filledPointsByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
+      const neutralOpportunityByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
+
+      for (const voterId of participantIds) {
+        const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
+        if (eligibleEntries.length === 0) continue
+
+        const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
+        for (const vote of poolVotes) {
+          if (vote.voter_player_id !== voterId) continue
+          const entry = entryBySongId.get(vote.song_id)
+          if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
+          actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
+        }
+
+        const actualSpent = Object.values(actualPointsByEntryId).reduce((sum, points) => sum + points, 0)
+        const actualScale = actualSpent > budget ? budget / actualSpent : 1
+        const unspentPoints = budget - Math.min(budget, actualSpent)
+        const neutralFill = unspentPoints / eligibleEntries.length
+        const neutralOpportunity = budget / eligibleEntries.length
+
+        for (const entry of eligibleEntries) {
+          filledPointsByEntryId[entry.id] += actualPointsByEntryId[entry.id] * actualScale + neutralFill
+          neutralOpportunityByEntryId[entry.id] += neutralOpportunity
+        }
+      }
+
+      for (const entry of poolEntries) {
+        const neutralOpportunity = neutralOpportunityByEntryId[entry.id]
+        const fairPoints = neutralOpportunity > 0
+          ? budget * filledPointsByEntryId[entry.id] / neutralOpportunity
+          : 0
+
+        for (const playerId of entry.submitterIds || []) {
+          if (!fairScores[playerId]) fairScores[playerId] = { total: 0, byRound: {} }
+          fairScores[playerId].total += fairPoints
+          fairScores[playerId].byRound[roundId] = (fairScores[playerId].byRound[roundId] || 0) + fairPoints
+        }
+      }
+    }
+  }
+
+  return fairScores
+}
+
 export function voterHasCompleted(votes = [], roundId, playerId) {
   return votes.some(vote => vote.round_id === roundId && vote.voter_player_id === playerId && Number(vote.points) > 0)
 }

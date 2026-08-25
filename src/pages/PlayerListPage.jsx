@@ -35,6 +35,12 @@ export default function PlayerListPage() {
     counts[song.player_id] = (counts[song.player_id] || 0) + 1
     return counts
   }, {})
+  const votedRoundIdsByPlayer = data.votes.reduce((roundsByPlayer, vote) => {
+    if (!scoredRoundIds.has(vote.round_id) || Number(vote.points) <= 0) return roundsByPlayer
+    if (!roundsByPlayer[vote.voter_player_id]) roundsByPlayer[vote.voter_player_id] = new Set()
+    roundsByPlayer[vote.voter_player_id].add(vote.round_id)
+    return roundsByPlayer
+  }, {})
   const rankedPlayers = data.players
     .map(row => {
       const score = leaderboardMap[row.id]
@@ -79,9 +85,6 @@ export default function PlayerListPage() {
           <h1>Players</h1>
           <p>Standings and profiles. Open a past round in Rounds for its full scorecard.</p>
         </div>
-        <Link className="btn btn-secondary btn-sm" to="/rounds">
-          Past rounds ({scoredRounds.length})
-        </Link>
       </section>
 
       {leader ? (
@@ -111,26 +114,34 @@ export default function PlayerListPage() {
           </div>
         ) : (
           <div className="card leaderboard-list player-standings-list">
-            {rankedPlayers.map((row, index) => (
-              <Link
-                className={`leader-row player-standings-row player-row-link ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
-                to={`/players/${row.id}`}
-                key={row.id}
-              >
-                <span className="rank">{index + 1}</span>
-                <Avatar player={row} linkToProfile={false} />
-                <span className="leader-name">
-                  {row.name}{row.id === player.id ? ' (you)' : ''}
-                  <small>{submissionCounts[row.id] || 0} submissions{row.active ? '' : ' · inactive'}</small>
-                  <span className="player-badges">
-                    {leader?.id === row.id && row.total > 0 && <em className="badge-leader">Current leader</em>}
-                    {latestWinnerIds.has(row.id) && <em className="badge-winner">Latest winner</em>}
-                    {row.id === player.id && <em className="badge-you">Your scorecard</em>}
+            {rankedPlayers.map((row, index) => {
+              const submissionCount = submissionCounts[row.id] || 0
+              const votedRoundCount = votedRoundIdsByPlayer[row.id]?.size || 0
+
+              return (
+                <Link
+                  className={`leader-row player-standings-row player-row-link ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
+                  to={`/players/${row.id}`}
+                  key={row.id}
+                >
+                  <span className="rank">{index + 1}</span>
+                  <Avatar player={row} linkToProfile={false} />
+                  <span className="leader-name">
+                    {row.name}{row.id === player.id ? ' (you)' : ''}
+                    <small>
+                      {submissionCount} submission{submissionCount === 1 ? '' : 's'} · voted in {votedRoundCount} round{votedRoundCount === 1 ? '' : 's'}
+                      {row.active ? '' : ' · inactive'}
+                    </small>
+                    <span className="player-badges">
+                      {leader?.id === row.id && row.total > 0 && <em className="badge-leader">Current leader</em>}
+                      {latestWinnerIds.has(row.id) && <em className="badge-winner">Latest winner</em>}
+                      {row.id === player.id && <em className="badge-you">Your scorecard</em>}
+                    </span>
                   </span>
-                </span>
-                <strong>{row.total}</strong>
-              </Link>
-            ))}
+                  <strong>{row.total}</strong>
+                </Link>
+              )
+            })}
           </div>
         )}
       </section>

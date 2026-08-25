@@ -3,12 +3,13 @@ import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
-import { EMPTY_PLAYER_DATA, fetchPlayerData, PLAYER_REALTIME_TABLES } from '../lib/data.js'
+import { EMPTY_PLAYER_PROFILE_DATA, fetchPlayerProfileData, PLAYER_PROFILE_REALTIME_TABLES } from '../lib/data.js'
 import { groupLabel, sidesForRound } from '../lib/groups.js'
 import { clearProfilePictureUrl, saveProfileName, saveProfilePictureUrl } from '../lib/mutations.js'
 import { uploadProfilePicture } from '../lib/profilePictures.js'
-import { buildLeaderboard, buildSongEntries, rankEntries } from '../lib/scoring.js'
+import { buildFairScores, buildLeaderboard, buildSongEntries, rankEntries } from '../lib/scoring.js'
 import { formatPacificDate, getRoundWeekStart, getScoredRoundIds, sortedRounds } from '../lib/schedule.js'
+import AppreciationSongCard from './home/AppreciationSongCard.jsx'
 
 export default function PlayerPage() {
   const { playerId } = useParams()
@@ -16,15 +17,16 @@ export default function PlayerPage() {
   const { settings } = useSettings()
   const { data, loading, reload } = useRealtimeData({
     channelName: `player-page-season-2-${playerId}`,
-    fetcher: fetchPlayerData,
-    initialData: EMPTY_PLAYER_DATA,
-    tables: PLAYER_REALTIME_TABLES,
+    fetcher: fetchPlayerProfileData,
+    initialData: EMPTY_PLAYER_PROFILE_DATA,
+    tables: PLAYER_PROFILE_REALTIME_TABLES,
   })
   const [profile, setProfile] = useState({ name: player.name, avatar_url: player.avatar_url || '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isAvatarLightboxOpen, setIsAvatarLightboxOpen] = useState(false)
+  const [isFairScoreModalOpen, setIsFairScoreModalOpen] = useState(false)
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -43,6 +45,17 @@ export default function PlayerPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isAvatarLightboxOpen])
 
+  useEffect(() => {
+    if (!isFairScoreModalOpen) return undefined
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setIsFairScoreModalOpen(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isFairScoreModalOpen])
+
   const viewedPlayer = data.players.find(row => row.id === playerId)
   const isSelf = playerId === player.id
   const scoredRoundIds = useMemo(() => getScoredRoundIds(data.rounds, settings), [data.rounds, settings])
@@ -55,6 +68,15 @@ export default function PlayerPage() {
     groupSongs: data.groupSongs,
     scoredRoundIds,
   }), [data, scoredRoundIds])
+  const fairScores = useMemo(() => buildFairScores({
+    songs: data.songs,
+    votes: data.votes,
+    duplicateGroups: data.groups,
+    groupSongs: data.groupSongs,
+    roundGroups: data.roundGroups,
+    scoredRoundIds,
+    pointsPerPlayer: settings?.points_per_player || 10,
+  }), [data, scoredRoundIds, settings?.points_per_player])
 
   const submissions = useMemo(() => {
     if (!viewedPlayer) return []
@@ -104,6 +126,7 @@ export default function PlayerPage() {
   }, [data, scoredRoundIds, settings, viewedPlayer])
 
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
+  const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
 
   async function saveProfile(event) {
@@ -255,14 +278,23 @@ export default function PlayerPage() {
           )}
         </div>
         <div className="player-profile-stats" aria-label="Player stats">
-          <span>
+          <span className="player-profile-stat">
             <strong>{score}</strong>
             <small>pts</small>
           </span>
-          <span>
+          <span className="player-profile-stat">
             <strong>{submissionCount}</strong>
             <small>submissions</small>
           </span>
+          <button
+            type="button"
+            className="player-profile-stat fair-score-stat"
+            onClick={() => setIsFairScoreModalOpen(true)}
+            aria-haspopup="dialog"
+          >
+            <strong>{fairScore.toFixed(1)}</strong>
+            <small>Fair score <span aria-hidden="true">?</span></small>
+          </button>
         </div>
       </section>
 
@@ -273,6 +305,13 @@ export default function PlayerPage() {
             <img src={displayPlayer.avatar_url} alt={`${displayPlayer.name}'s profile picture`} />
           </section>
         </div>
+      )}
+
+      {isFairScoreModalOpen && (
+        <FairScoreModal
+          pointsPerPlayer={settings?.points_per_player || 10}
+          onClose={() => setIsFairScoreModalOpen(false)}
+        />
       )}
 
       {isSelf && isEditingProfile && (
@@ -333,7 +372,14 @@ export default function PlayerPage() {
         ) : (
           <div className="song-stack">
             {submissions.map(submission => (
-              <PlayerSubmission key={submission.id} submission={submission} />
+              <PlayerSubmission
+                key={submission.id}
+                submission={submission}
+                comments={data.comments}
+                commentLikes={data.commentLikes}
+                player={player}
+                onChanged={reload}
+              />
             ))}
           </div>
         )}
@@ -342,40 +388,79 @@ export default function PlayerPage() {
   )
 }
 
-function PlayerSubmission({ submission }) {
+function FairScoreModal({ pointsPerPlayer, onClose }) {
+  return (
+    <div className="fair-score-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="fair-score-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fair-score-title"
+        aria-describedby="fair-score-description"
+        onMouseDown={event => event.stopPropagation()}
+      >
+        <button type="button" className="fair-score-modal-close" onClick={onClose} aria-label="Close fair score explanation" autoFocus>×</button>
+        <div>
+          <p className="eyebrow">Vanity stat · just for fun</p>
+          <h2 id="fair-score-title">What is fair score?</h2>
+        </div>
+        <p id="fair-score-description">
+          Fair score estimates how a song performed after accounting for missing ballots and unequal voting opportunities. It does not affect official points, standings, ranks, or winners.
+        </p>
+
+        <div className="fair-score-equation" aria-label={`Actual points plus neutral fill, divided by neutral opportunity, multiplied by ${pointsPerPlayer}`}>
+          <span>Actual points</span>
+          <b>+</b>
+          <span>Neutral fill</span>
+          <b>÷</b>
+          <span>Opportunity</span>
+          <b>× {pointsPerPlayer}</b>
+        </div>
+
+        <ul className="fair-score-details">
+          <li><strong>Unspent points become neutral.</strong> They are divided evenly among every song that voter could have supported.</li>
+          <li><strong>Opportunity is normalized.</strong> Group size, submissions, and the number of eligible voters are included before returning the result to the usual {pointsPerPlayer}-point round scale.</li>
+          <li><strong>Duplicates count once.</strong> All submitters are excluded from voting on the merged entry, so courtesy points are not added again.</li>
+        </ul>
+
+        <p className="fair-score-example">
+          If someone skips a {pointsPerPlayer}-point ballot with five eligible songs, each opponent receives a neutral {formatFairNumber(pointsPerPlayer / 5)} points in this calculation.
+        </p>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>Got it</button>
+      </section>
+    </div>
+  )
+}
+
+function formatFairNumber(value) {
+  return Number.isInteger(value) ? value : Number(value.toFixed(2))
+}
+
+function PlayerSubmission({ submission, comments, commentLikes, player, onChanged }) {
   const { entry, rank, round, song, weekStart } = submission
 
   return (
-    <article className="song-card player-submission-card">
-      <div className="results-row">
-        <div className="song-card-main">
-          <span className="song-number">{rank}</span>
+    <AppreciationSongCard
+      entry={entry}
+      comments={comments}
+      commentLikes={commentLikes}
+      player={player}
+      roundId={round.id}
+      onChanged={onChanged}
+      isTopEntry={rank === 1 && entry.totalPoints > 0}
+      className="player-submission-card"
+      submitterNote={song?.submitter_note ?? entry.submitter_note}
+      context={(
+        <>
           <div>
             <p className="eyebrow">Week of {formatPacificDate(weekStart)}</p>
-            <div className="section-heading compact">
-              <h2>{song?.title || entry.title}</h2>
-              {entry.side !== null && entry.side !== undefined && (
-                <span className={`side-tag side-${entry.side}`}>{groupLabel(entry.side)}</span>
-              )}
-              {entry.isDuplicate && <span className="soft-tag">Merged duplicate</span>}
-            </div>
-            <p>{song?.artist || entry.artist}{song?.album ? ` · ${song.album}` : ''}</p>
-            <p className="muted">{round.theme_name}</p>
-            <div className="song-actions">
-              {song?.link && <a href={song.link} target="_blank" rel="noreferrer">Listen</a>}
-              <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${song?.artist || entry.artist} ${song?.title || entry.title}`)}`} target="_blank" rel="noreferrer">YouTube</a>
-            </div>
-            {song?.submitter_note && <p className="note">{song.submitter_note}</p>}
-            {entry.isDuplicate && song?.id !== entry.canonical_song_id && (
-              <p className="merge-note">Scored with the merged entry: {entry.title} by {entry.artist}.</p>
-            )}
+            <p className="player-submission-theme">{round.theme_name}</p>
           </div>
-        </div>
-        <div className="score-badge">
-          <strong>{entry.totalPoints}</strong>
-          <span>pts</span>
-        </div>
-      </div>
-    </article>
+          {entry.side !== null && entry.side !== undefined && (
+            <span className={`side-tag side-${entry.side}`}>{groupLabel(entry.side)}</span>
+          )}
+        </>
+      )}
+    />
   )
 }

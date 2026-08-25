@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
 import { groupLabel } from '../../lib/groups.js'
 import { buildSongEntries, rankEntries } from '../../lib/scoring.js'
-import CommentThread from './CommentThread.jsx'
-import { commentsForEntry, playerName } from './homeUtils.js'
+import AppreciationSongCard from './AppreciationSongCard.jsx'
 import PlaylistPanel from './PlaylistPanel.jsx'
 
 export default function AppreciationView({ round, player, songs, votes, comments, commentLikes, duplicateGroups, groupSongs, playlists = [], allPlayers = [], sides, onChanged }) {
@@ -106,49 +104,16 @@ export default function AppreciationView({ round, player, songs, votes, comments
             <p>{isSplit ? `Nobody on ${groupLabel(activeSide)} submitted a song.` : 'This round did not receive submissions.'}</p>
           </div>
         ) : activeEntries.map(entry => (
-          <article className={`song-card revealed ${entry.rank === 1 && entry.totalPoints > 0 ? 'top-entry' : ''}`} key={entry.id}>
-            <div className="results-row">
-              <div className="song-card-main">
-                <span className="song-number">{entry.rank}</span>
-                <div>
-                  <div className="section-heading compact">
-                    <h2>{entry.title}</h2>
-                    {entry.isDuplicate && <span className="soft-tag">Merged duplicate</span>}
-                  </div>
-                  <p>{entry.artist}{entry.album ? ` · ${entry.album}` : ''}</p>
-                  <div className="submitter-line">
-                    {entry.submitters.map(submitter => (
-                      <span key={submitter.id}>
-                        <Avatar player={submitter} size="sm" />
-                        {playerName(submitter)}
-                      </span>
-                    ))}
-                  </div>
-                  {entry.submitter_note && <p className="note">{entry.submitter_note}</p>}
-                  {entry.isDuplicate && (
-                    <p className="merge-note">
-                      {entry.votePoints} vote pts + {entry.courtesyPoints} courtesy pt{entry.courtesyPoints === 1 ? '' : 's'}
-                      {entry.ineligiblePoints > 0 ? ` · ${entry.ineligiblePoints} self-vote pt${entry.ineligiblePoints === 1 ? '' : 's'} removed` : ''}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="score-badge">
-                <strong>{entry.totalPoints}</strong>
-                <span>pts</span>
-              </div>
-            </div>
-
-            <CommentThread
-              comments={commentsForEntry(comments, entry)}
-              commentLikes={commentLikes}
-              player={player}
-              revealAuthors
-              songId={entry.canonical_song_id}
-              onChanged={onChanged}
-              roundId={round.id}
-            />
-          </article>
+          <AppreciationSongCard
+            key={entry.id}
+            entry={entry}
+            comments={comments}
+            commentLikes={commentLikes}
+            player={player}
+            roundId={round.id}
+            onChanged={onChanged}
+            isTopEntry={entry.rank === 1 && entry.totalPoints > 0}
+          />
         ))}
       </section>
     </section>
