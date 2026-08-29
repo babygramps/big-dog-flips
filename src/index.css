@@ -2262,10 +2262,10 @@ select:focus {
   color: #5134a8;
 }
 
-.player-badges .badge-say-less {
-  border-color: var(--aqua);
-  background: var(--aqua-soft);
-  color: #08677e;
+.player-badges .badge-lurker {
+  border-color: var(--quiet);
+  background: #f3edf5;
+  color: #5f5266;
 }
 
 .player-badges .badge-community-pillar {
@@ -2830,10 +2830,10 @@ select:focus {
   line-height: 1.42;
 }
 
-.player-medal.badge-say-less {
-  --medal-color: var(--aqua);
-  --medal-soft: var(--aqua-soft);
-  --medal-pop: #8ee7f7;
+.player-medal.badge-lurker {
+  --medal-color: var(--quiet);
+  --medal-soft: #f3edf5;
+  --medal-pop: #cbbfd0;
 }
 
 .player-medal.badge-community-pillar {

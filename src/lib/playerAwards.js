@@ -8,12 +8,12 @@ const AWARDS = {
     mark: 'Aa',
     title: 'Writes the most words across all scored-round song descriptions.',
   },
-  sayLess: {
-    key: 'say-less',
-    label: 'Say Less',
-    className: 'badge-say-less',
+  lurker: {
+    key: 'lurker',
+    label: 'Lurker',
+    className: 'badge-lurker',
     mark: '…',
-    title: 'Uses the fewest words across scored-round song descriptions, with at least two submissions and one real description.',
+    title: 'Has submitted a song but has not written a song description or a comment in a scored round.',
   },
   communityPillar: {
     key: 'community-pillar',
@@ -94,17 +94,16 @@ export function buildPlayerAwards({
   const writers = Object.values(descriptionStats).filter(row => row.words > 0)
   addAward(awardsByPlayerId, idsAtExtreme(writers, row => row.words), AWARDS.novelist)
 
-  const conciseWriters = writers.filter(row => row.submissions >= 2)
-  const conciseWordTotals = new Set(conciseWriters.map(row => row.words))
-  if (conciseWordTotals.size > 1) {
-    addAward(awardsByPlayerId, idsAtExtreme(conciseWriters, row => row.words, 'min'), AWARDS.sayLess)
-  }
-
   const commentCounts = {}
   for (const comment of comments) {
     if (!scoredRoundIds.has(comment.round_id) || !comment.player_id) continue
     commentCounts[comment.player_id] = (commentCounts[comment.player_id] || 0) + 1
   }
+  const lurkers = Object.values(descriptionStats)
+    .filter(row => row.submissions > 0 && row.words === 0 && !commentCounts[row.id])
+    .map(row => row.id)
+  addAward(awardsByPlayerId, lurkers, AWARDS.lurker)
+
   const commenters = Object.entries(commentCounts).map(([id, count]) => ({ id, count }))
   addAward(awardsByPlayerId, idsAtExtreme(commenters, row => row.count), AWARDS.communityPillar)
 
