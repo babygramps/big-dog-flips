@@ -2281,6 +2281,13 @@ select:focus {
   box-shadow: 2px 2px 0 rgba(112, 71, 7, 0.18);
 }
 
+.player-badges .badge-deep-cut {
+  border-color: #4f66a5;
+  background: #e6efff;
+  color: #263d78;
+  box-shadow: 2px 2px 0 rgba(38, 61, 120, 0.16);
+}
+
 .profile-editor {
   display: grid;
   gap: 1rem;
@@ -2740,6 +2747,105 @@ select:focus {
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+.player-medal-case {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.1rem;
+  background:
+    linear-gradient(135deg, rgba(141, 107, 255, 0.08), rgba(255, 230, 109, 0.12)),
+    var(--surface);
+}
+
+.player-medal-case .section-heading > div {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.player-medal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 0.7rem;
+}
+
+.player-medal {
+  --medal-color: var(--grape);
+  --medal-soft: var(--grape-soft);
+  --medal-pop: #c8b8ff;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 6.25rem;
+  border: 2px solid var(--medal-color);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.92), transparent 58%),
+    var(--medal-soft);
+  padding: 0.85rem;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.62);
+}
+
+.player-medal-mark {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border: 3px solid color-mix(in srgb, var(--medal-color), #32243a 24%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 25%, rgba(255, 255, 255, 0.9) 0 6%, transparent 7%),
+    radial-gradient(circle, var(--medal-soft) 0 43%, var(--medal-pop) 44% 54%, var(--medal-color) 55% 62%, var(--medal-soft) 63%);
+  color: color-mix(in srgb, var(--medal-color), #24182c 48%);
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--medal-color), #24182c 30%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.player-medal:hover .player-medal-mark {
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--medal-color), #24182c 30%);
+  transform: translateY(-2px) rotate(-3deg);
+}
+
+.player-medal h3 {
+  margin-bottom: 0.22rem;
+  color: color-mix(in srgb, var(--medal-color), #32243a 52%);
+}
+
+.player-medal p {
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.player-medal.badge-say-less {
+  --medal-color: var(--aqua);
+  --medal-soft: var(--aqua-soft);
+  --medal-pop: #8ee7f7;
+}
+
+.player-medal.badge-chatter-box {
+  --medal-color: var(--pink);
+  --medal-soft: var(--pink-soft);
+  --medal-pop: #ff91c4;
+}
+
+.player-medal.badge-golden-ear {
+  --medal-color: #a96f0b;
+  --medal-soft: #fff2aa;
+  --medal-pop: #e4aa2d;
+}
+
+.player-medal.badge-deep-cut {
+  --medal-color: #4f66a5;
+  --medal-soft: #e6efff;
+  --medal-pop: #8fbaff;
 }
 
 .segmented button.active {

@@ -5,25 +5,36 @@ const AWARDS = {
     key: 'novelist',
     label: 'The Novelist',
     className: 'badge-novelist',
-    title: 'Most words across all scored-round submission descriptions',
+    mark: 'Aa',
+    title: 'Writes the most words across all scored-round song descriptions.',
   },
   sayLess: {
     key: 'say-less',
     label: 'Say Less',
     className: 'badge-say-less',
-    title: 'Fewest words across scored-round submission descriptions, with at least two submissions and one description',
+    mark: '…',
+    title: 'Uses the fewest words across scored-round song descriptions, with at least two submissions and one real description.',
   },
   chatterBox: {
     key: 'chatter-box',
     label: 'Chatter Box',
     className: 'badge-chatter-box',
-    title: 'Most comments across scored rounds',
+    mark: '“ ”',
+    title: 'Has posted the most comments across scored rounds.',
   },
   goldenEar: {
     key: 'golden-ear',
     label: 'Golden Ear',
     className: 'badge-golden-ear',
-    title: 'Ballots most aligned with leave-one-out fair-score popularity across eligible songs',
+    mark: 'GE',
+    title: 'Most consistently backs songs their voting pool also loves. Uses leave-one-out fair scores, so their own ballot cannot boost the result and close runners-up still earn strong credit.',
+  },
+  deepCut: {
+    key: 'deep-cut',
+    label: 'Deep Cut',
+    className: 'badge-deep-cut',
+    mark: 'DC',
+    title: 'Most consistently champions songs their voting pool overlooks. Uses the same leave-one-out fair-score curve as Golden Ear, inverted.',
   },
 }
 
@@ -109,6 +120,7 @@ export function buildPlayerAwards({
 
   if (goldenEarScoreRange > 1e-9) {
     addAward(awardsByPlayerId, idsAtExtreme(experiencedListeners, row => row.score), AWARDS.goldenEar)
+    addAward(awardsByPlayerId, idsAtExtreme(experiencedListeners, row => row.uniquenessScore), AWARDS.deepCut)
   }
 
   return awardsByPlayerId

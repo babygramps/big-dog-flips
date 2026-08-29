@@ -313,13 +313,13 @@ export function buildFairScores({
   return fairScores
 }
 
-// Golden Ear measures how closely each ballot anticipated the rest of its pool's taste.
+// Golden Ear and Deep Cut measure how each ballot relates to the rest of its pool's taste.
 // Popularity is calculated with the fair-score model above, but with the voter being
 // evaluated removed so their own points cannot improve their result. A song's quality
 // blends its fair-score distance from the field (70%) with its percentile rank (30%),
 // which gives a close second nearly as much credit as the winner. Ballot points weight
-// that quality, partial ballots contribute proportionally, and a neutral prior tempers
-// tiny samples.
+// that quality; Deep Cut uses the inverse. Partial ballots contribute proportionally,
+// and a neutral prior tempers tiny samples.
 export function buildGoldenEarScores({
   songs = [],
   votes = [],
@@ -419,11 +419,17 @@ export function buildGoldenEarScores({
         }
 
         const completion = Math.min(1, spent / budget)
-        if (!tallies[voterId]) tallies[voterId] = { accuracyTotal: 0, ballotWeight: 0, ballots: 0, byRound: {} }
+        if (!tallies[voterId]) {
+          tallies[voterId] = { accuracyTotal: 0, uniquenessTotal: 0, ballotWeight: 0, ballots: 0, byRound: {} }
+        }
         tallies[voterId].accuracyTotal += ballotAccuracy * completion
+        tallies[voterId].uniquenessTotal += (1 - ballotAccuracy) * completion
         tallies[voterId].ballotWeight += completion
         tallies[voterId].ballots += 1
-        tallies[voterId].byRound[roundId] = ballotAccuracy
+        tallies[voterId].byRound[roundId] = {
+          popularity: ballotAccuracy,
+          uniqueness: 1 - ballotAccuracy,
+        }
       }
     }
   }
@@ -432,7 +438,9 @@ export function buildGoldenEarScores({
   return Object.fromEntries(Object.entries(tallies).map(([playerId, tally]) => {
     const rawScore = tally.ballotWeight > 0 ? tally.accuracyTotal / tally.ballotWeight : 0.5
     const score = (tally.accuracyTotal + 0.5 * neutralPriorWeight) / (tally.ballotWeight + neutralPriorWeight)
-    return [playerId, { ...tally, rawScore, score }]
+    const uniquenessRawScore = tally.ballotWeight > 0 ? tally.uniquenessTotal / tally.ballotWeight : 0.5
+    const uniquenessScore = (tally.uniquenessTotal + 0.5 * neutralPriorWeight) / (tally.ballotWeight + neutralPriorWeight)
+    return [playerId, { ...tally, rawScore, score, uniquenessRawScore, uniquenessScore }]
   }))
 }
 

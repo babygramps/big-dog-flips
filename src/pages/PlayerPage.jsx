@@ -6,6 +6,7 @@ import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_PROFILE_DATA, fetchPlayerProfileData, PLAYER_PROFILE_REALTIME_TABLES } from '../lib/data.js'
 import { groupLabel, sidesForRound } from '../lib/groups.js'
 import { clearProfilePictureUrl, saveProfileName, saveProfilePictureUrl } from '../lib/mutations.js'
+import { buildPlayerAwards } from '../lib/playerAwards.js'
 import { uploadProfilePicture } from '../lib/profilePictures.js'
 import { buildFairScores, buildLeaderboard, buildSongEntries, rankEntries } from '../lib/scoring.js'
 import { formatPacificDate, getRoundWeekStart, getScoredRoundIds, sortedRounds } from '../lib/schedule.js'
@@ -77,6 +78,17 @@ export default function PlayerPage() {
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
   }), [data, scoredRoundIds, settings?.points_per_player])
+  const awardsByPlayerId = useMemo(() => buildPlayerAwards({
+    players: data.players,
+    songs: data.songs,
+    votes: data.votes,
+    comments: data.comments,
+    duplicateGroups: data.groups,
+    groupSongs: data.groupSongs,
+    roundGroups: data.roundGroups,
+    scoredRoundIds,
+    pointsPerPlayer: settings?.points_per_player || 10,
+  }), [data, scoredRoundIds, settings?.points_per_player])
 
   const submissions = useMemo(() => {
     if (!viewedPlayer) return []
@@ -128,6 +140,7 @@ export default function PlayerPage() {
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
   const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
+  const playerAwards = awardsByPlayerId[playerId] || []
 
   async function saveProfile(event) {
     event.preventDefault()
@@ -297,6 +310,29 @@ export default function PlayerPage() {
           </button>
         </div>
       </section>
+
+      {playerAwards.length > 0 && (
+        <section className="card player-medal-case" aria-labelledby="player-medal-case-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">League superlatives</p>
+              <h2 id="player-medal-case-title">Medal case</h2>
+            </div>
+            <span className="soft-tag">{playerAwards.length} earned</span>
+          </div>
+          <div className="player-medal-grid">
+            {playerAwards.map(award => (
+              <article className={`player-medal ${award.className}`} key={award.key}>
+                <span className="player-medal-mark" aria-hidden="true">{award.mark}</span>
+                <div>
+                  <h3>{award.label}</h3>
+                  <p>{award.title}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {isAvatarLightboxOpen && displayPlayer.avatar_url && (
         <div className="profile-image-lightbox-backdrop" role="presentation" onMouseDown={() => setIsAvatarLightboxOpen(false)}>
