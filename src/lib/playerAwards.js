@@ -34,7 +34,7 @@ const AWARDS = {
     label: 'Deep Cut',
     className: 'badge-deep-cut',
     mark: 'DC',
-    title: 'Most consistently champions songs their voting pool overlooks. Uses the same leave-one-out fair-score curve as Golden Ear, inverted.',
+    title: 'Gives the most ballot support to songs the rest of their voting pool overlooks. The score removes their own vote, then measures each pick against fair scores adjusted for ballot gaps and voting opportunity.',
   },
 }
 
