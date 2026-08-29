@@ -444,12 +444,12 @@ export function buildGoldenEarScores({
   }))
 }
 
-// Cult Following measures whether a player's points come from a small, loyal core.
+// Cult Following and Crowd Sourced measure opposite shapes of incoming support.
 // Each target-voter pair records every ballot where support was possible. Fan affinity
 // balances ballot share, repeat support, lift over a neutral ballot, and sample size.
-// The final score combines that affinity with the concentration of actual vote points
-// and the share supplied by repeat fans. Courtesy points never enter the calculation.
-export function buildCultFollowingScores({
+// Cult Following rewards a loyal core; Crowd Sourced rewards broad, even participation.
+// Courtesy points never enter either calculation.
+export function buildAudienceScores({
   songs = [],
   votes = [],
   duplicateGroups = [],
@@ -573,9 +573,9 @@ export function buildCultFollowingScores({
         return { ...fan, ballotShare, repeatRate, preferenceLift, affinity }
       })
 
-    const repeatFans = fans.filter(fan => fan.supportEvents >= 2)
-    if (repeatFans.length === 0) continue
+    if (fans.length === 0) continue
 
+    const repeatFans = fans.filter(fan => fan.supportEvents >= 2)
     const totalPoints = fans.reduce((sum, fan) => sum + fan.points, 0)
     const pointConcentration = fans.reduce((sum, fan) => {
       const pointShare = fan.points / totalPoints
@@ -585,13 +585,34 @@ export function buildCultFollowingScores({
     const coreFans = [...fans].sort((a, b) => b.points - a.points).slice(0, 2)
     const corePoints = coreFans.reduce((sum, fan) => sum + fan.points, 0)
     const coreAffinity = coreFans.reduce((sum, fan) => sum + fan.affinity * fan.points, 0) / corePoints
-    const score = Math.cbrt(pointConcentration * repeatSupportShare * coreAffinity)
+    const cultFollowingScore = repeatFans.length > 0
+      ? Math.cbrt(pointConcentration * repeatSupportShare * coreAffinity)
+      : null
+
+    const supportCoverage = fans.length / supportByVoterId.size
+    const pointEvenness = fans.length > 1
+      ? -fans.reduce((sum, fan) => {
+          const pointShare = fan.points / totalPoints
+          return sum + pointShare * Math.log(pointShare)
+        }, 0) / Math.log(fans.length)
+      : 0
+    const audienceAffinity = fans.reduce((sum, fan) => sum + fan.affinity * fan.points, 0) / totalPoints
+    const audienceConfidence = fans.length / (fans.length + 2)
+    const crowdSourcedScore = Math.pow(
+      supportCoverage * pointEvenness * audienceAffinity * audienceConfidence,
+      1 / 4
+    )
 
     results[playerId] = {
-      score,
+      cultFollowingScore,
+      crowdSourcedScore,
       pointConcentration,
+      pointEvenness,
       repeatSupportShare,
       coreAffinity,
+      audienceAffinity,
+      audienceConfidence,
+      supportCoverage,
       totalPoints,
       fanCount: fans.length,
       eligibleFanCount: supportByVoterId.size,
@@ -601,6 +622,15 @@ export function buildCultFollowingScores({
   }
 
   return results
+}
+
+// Kept as a focused adapter for callers that use the original Cult Following API.
+export function buildCultFollowingScores(options) {
+  return Object.fromEntries(
+    Object.entries(buildAudienceScores(options))
+      .filter(([, result]) => Number.isFinite(result.cultFollowingScore))
+      .map(([playerId, result]) => [playerId, { ...result, score: result.cultFollowingScore }])
+  )
 }
 
 export function voterHasCompleted(votes = [], roundId, playerId) {
