@@ -2084,7 +2084,7 @@ select:focus {
   background:
     radial-gradient(circle at 14% 22%, rgba(255, 255, 255, 0.95) 0 2px, transparent 3px),
     radial-gradient(circle at 79% 72%, rgba(255, 94, 168, 0.34) 0 10%, transparent 27%),
-    linear-gradient(115deg, #fff9b8 0%, #ffd84d 18%, #fffef0 31%, #f3ae00 48%, #fff5a3 63%, #ffc82e 80%, #fffbd7 100%),
+    linear-gradient(115deg, #fffdf7 0%, #f3e8c8 18%, #fff 31%, #d8c184 48%, #fffdf8 63%, #ead9aa 80%, #fff 100%),
     linear-gradient(90deg, var(--bling-pink), var(--bling-gold) 28%, #fff 46%, var(--bling-aqua) 67%, var(--bling-violet));
   background-position: 0 0, 0 0, 0% 50%, 0 0;
   background-size: auto, auto, 230% 100%, 100% 100%;
