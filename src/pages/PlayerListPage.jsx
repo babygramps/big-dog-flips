@@ -2,10 +2,11 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
+import MedalIcon from '../components/MedalIcon.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_DATA, fetchPlayerData, PLAYER_REALTIME_TABLES } from '../lib/data.js'
 import { buildPlayerAwards } from '../lib/playerAwards.js'
-import { buildLeaderboard, buildSongEntries } from '../lib/scoring.js'
+import { buildLeaderboard } from '../lib/scoring.js'
 import { getLeagueContext, getScoredRoundIds } from '../lib/schedule.js'
 
 export default function PlayerListPage() {
@@ -31,17 +32,6 @@ export default function PlayerListPage() {
     scoredRoundIds,
   }), [data, scoredRoundIds])
   const leaderboardMap = Object.fromEntries(leaderboard.map(row => [row.id, row]))
-  const submissionCounts = data.songs.reduce((counts, song) => {
-    if (!scoredRoundIds.has(song.round_id)) return counts
-    counts[song.player_id] = (counts[song.player_id] || 0) + 1
-    return counts
-  }, {})
-  const votedRoundIdsByPlayer = data.votes.reduce((roundsByPlayer, vote) => {
-    if (!scoredRoundIds.has(vote.round_id) || Number(vote.points) <= 0) return roundsByPlayer
-    if (!roundsByPlayer[vote.voter_player_id]) roundsByPlayer[vote.voter_player_id] = new Set()
-    roundsByPlayer[vote.voter_player_id].add(vote.round_id)
-    return roundsByPlayer
-  }, {})
   const rankedPlayers = data.players
     .map(row => {
       const score = leaderboardMap[row.id]
@@ -52,21 +42,6 @@ export default function PlayerListPage() {
     })
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
   const latestScoredRound = scoredRounds[scoredRounds.length - 1]
-  const latestWinnerIds = useMemo(() => {
-    if (!latestScoredRound) return new Set()
-    const roundSongs = data.songs.filter(song => song.round_id === latestScoredRound.id)
-    const roundVotes = data.votes.filter(vote => vote.round_id === latestScoredRound.id)
-    const roundGroups = data.groups.filter(group => group.round_id === latestScoredRound.id)
-    const groupIds = new Set(roundGroups.map(group => group.id))
-    const roundGroupSongs = data.groupSongs.filter(row => groupIds.has(row.group_id))
-    const winner = buildSongEntries({
-      songs: roundSongs,
-      votes: roundVotes,
-      duplicateGroups: roundGroups,
-      groupSongs: roundGroupSongs,
-    })[0]
-    return new Set(winner?.submitterIds || [])
-  }, [data, latestScoredRound])
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
     songs: data.songs,
@@ -77,7 +52,9 @@ export default function PlayerListPage() {
     roundGroups: data.roundGroups,
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
-  }), [data, scoredRoundIds, settings?.points_per_player])
+    leaderboard,
+    latestScoredRoundId: latestScoredRound?.id || null,
+  }), [data, scoredRoundIds, settings?.points_per_player, leaderboard, latestScoredRound?.id])
   const activeCount = data.players.filter(row => row.active).length
 
   if (loading) {
@@ -110,8 +87,6 @@ export default function PlayerListPage() {
         ) : (
           <div className="card leaderboard-list player-standings-list">
             {rankedPlayers.map((row, index) => {
-              const submissionCount = submissionCounts[row.id] || 0
-              const votedRoundCount = votedRoundIdsByPlayer[row.id]?.size || 0
               const isFirstPlace = index === 0 && row.total > 0
 
               return (
@@ -124,15 +99,12 @@ export default function PlayerListPage() {
                   <Avatar player={row} linkToProfile={false} />
                   <span className="leader-name">
                     {row.name}{row.id === player.id ? ' (you)' : ''}
-                    <small>
-                      {submissionCount} submission{submissionCount === 1 ? '' : 's'} · voted in {votedRoundCount} round{votedRoundCount === 1 ? '' : 's'}
-                      {row.active ? '' : ' · inactive'}
-                    </small>
                     <span className="player-badges">
-                      {isFirstPlace && <em className="badge-leader">Current leader</em>}
-                      {latestWinnerIds.has(row.id) && <em className="badge-winner">Latest winner</em>}
                       {(awardsByPlayerId[row.id] || []).map(award => (
-                        <em className={award.className} title={award.title} key={award.key}>{award.label}</em>
+                        <em className={award.className} title={award.title} key={award.key}>
+                          <MedalIcon name={award.icon} />
+                          {award.label}
+                        </em>
                       ))}
                     </span>
                   </span>

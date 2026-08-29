@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
+import MedalIcon from '../components/MedalIcon.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_PROFILE_DATA, fetchPlayerProfileData, PLAYER_PROFILE_REALTIME_TABLES } from '../lib/data.js'
 import { groupLabel, sidesForRound } from '../lib/groups.js'
@@ -69,6 +70,10 @@ export default function PlayerPage() {
     groupSongs: data.groupSongs,
     scoredRoundIds,
   }), [data, scoredRoundIds])
+  const latestScoredRoundId = useMemo(() => {
+    const scoredRounds = sortedRounds(data.rounds).filter(round => scoredRoundIds.has(round.id))
+    return scoredRounds[scoredRounds.length - 1]?.id || null
+  }, [data.rounds, scoredRoundIds])
   const fairScores = useMemo(() => buildFairScores({
     songs: data.songs,
     votes: data.votes,
@@ -88,7 +93,9 @@ export default function PlayerPage() {
     roundGroups: data.roundGroups,
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
-  }), [data, scoredRoundIds, settings?.points_per_player])
+    leaderboard,
+    latestScoredRoundId,
+  }), [data, scoredRoundIds, settings?.points_per_player, leaderboard, latestScoredRoundId])
 
   const submissions = useMemo(() => {
     if (!viewedPlayer) return []
@@ -140,6 +147,9 @@ export default function PlayerPage() {
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
   const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
+  const voteCount = data.votes.filter(vote => (
+    vote.voter_player_id === playerId && scoredRoundIds.has(vote.round_id) && Number(vote.points) > 0
+  )).length
   const playerAwards = awardsByPlayerId[playerId] || []
 
   async function saveProfile(event) {
@@ -272,10 +282,6 @@ export default function PlayerPage() {
             <p className="eyebrow">{isSelf ? 'My profile' : displayPlayer.active ? 'Active player' : 'Inactive player'}</p>
             <h2>{displayPlayer.name}</h2>
           </div>
-          <div className="player-profile-tags">
-            <span className="soft-tag">{displayPlayer.active ? 'Active' : 'Inactive'}</span>
-            <span className="soft-tag">{submissions.length} submissions</span>
-          </div>
           {isSelf && (
             <div className="profile-actions">
               {!isEditingProfile && (
@@ -299,6 +305,10 @@ export default function PlayerPage() {
             <strong>{submissionCount}</strong>
             <small>submissions</small>
           </span>
+          <span className="player-profile-stat">
+            <strong>{voteCount}</strong>
+            <small>votes cast</small>
+          </span>
           <button
             type="button"
             className="player-profile-stat fair-score-stat"
@@ -318,12 +328,13 @@ export default function PlayerPage() {
               <p className="eyebrow">League superlatives</p>
               <h2 id="player-medal-case-title">Medal case</h2>
             </div>
-            <span className="soft-tag">{playerAwards.length} earned</span>
           </div>
           <div className="player-medal-grid">
             {playerAwards.map(award => (
               <article className={`player-medal ${award.className}`} key={award.key}>
-                <span className="player-medal-mark" aria-hidden="true">{award.mark}</span>
+                <span className="player-medal-mark" aria-hidden="true">
+                  <MedalIcon name={award.icon} />
+                </span>
                 <div>
                   <h3>{award.label}</h3>
                   <p>{award.title}</p>

@@ -1,60 +1,74 @@
 import { buildAudienceScores, buildGoldenEarScores, buildSongEntries } from './scoring.js'
 
 const AWARDS = {
+  currentLeader: {
+    key: 'current-leader',
+    label: 'Current Leader',
+    className: 'badge-leader',
+    icon: 'crown',
+    title: 'Holds the highest total score in the season standings.',
+  },
+  latestWinner: {
+    key: 'latest-winner',
+    label: 'Latest Winner',
+    className: 'badge-winner',
+    icon: 'trophy',
+    title: 'Won the latest scored round. Ties and split-side winners share the medal.',
+  },
   novelist: {
     key: 'novelist',
     label: 'The Novelist',
     className: 'badge-novelist',
-    mark: 'Aa',
+    icon: 'quill',
     title: 'Writes the most words across all scored-round song descriptions.',
   },
   lurker: {
     key: 'lurker',
     label: 'Lurker',
     className: 'badge-lurker',
-    mark: '…',
+    icon: 'eye',
     title: 'Has submitted a song but has not written a song description or a comment in a scored round.',
   },
   communityPillar: {
     key: 'community-pillar',
     label: 'Community Pillar',
     className: 'badge-community-pillar',
-    mark: 'CP',
+    icon: 'pillar',
     title: 'Has written the most comments across scored rounds.',
   },
   conversationStarter: {
     key: 'conversation-starter',
     label: 'Conversation Starter',
     className: 'badge-conversation-starter',
-    mark: 'CS',
+    icon: 'chat',
     title: 'Draws comments from the widest mix of players across their submissions.',
   },
   cultFollowing: {
     key: 'cult-following',
     label: 'Cult Following',
     className: 'badge-cult-following',
-    mark: 'CF',
+    icon: 'orbit',
     title: 'Gets the most concentrated repeat support from a small circle of voters. The score accounts for ballot size and every round each fan had the chance to vote for them.',
   },
   crowdSourced: {
     key: 'crowd-sourced',
     label: 'Crowd Sourced',
     className: 'badge-crowd-sourced',
-    mark: 'ALL',
+    icon: 'crowd',
     title: 'Wins support from the broadest mix of eligible voters. We account for how evenly fans divide their points and how often each fan returns.',
   },
   goldenEar: {
     key: 'golden-ear',
     label: 'Golden Ear',
     className: 'badge-golden-ear',
-    mark: 'GE',
+    icon: 'ear',
     title: 'Most consistently backs songs their voting pool also loves. Uses leave-one-out fair scores, so their own ballot cannot boost the result and close runners-up still earn strong credit.',
   },
   deepCut: {
     key: 'deep-cut',
     label: 'Deep Cut',
     className: 'badge-deep-cut',
-    mark: 'DC',
+    icon: 'gem',
     title: 'Gives the most ballot support to songs the rest of their voting pool overlooks. The score removes their own vote, then measures each pick against fair scores adjusted for ballot gaps and voting opportunity.',
   },
 }
@@ -78,6 +92,54 @@ function idsAtExtreme(rows, valueFor, mode = 'max') {
   return rows.filter(row => Math.abs(valueFor(row) - extreme) <= 1e-9).map(row => row.id)
 }
 
+function winningPlayerIdsForRound({
+  roundId,
+  songs = [],
+  votes = [],
+  duplicateGroups = [],
+  groupSongs = [],
+  roundGroups = [],
+}) {
+  if (!roundId) return []
+
+  const roundSongs = songs.filter(song => song.round_id === roundId)
+  const roundVotes = votes.filter(vote => vote.round_id === roundId)
+  const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
+  const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
+  const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+  const sideByPlayerId = Object.fromEntries(
+    roundGroups
+      .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+      .map(row => [row.player_id, Number(row.group_index)])
+  )
+  const isSplit = Object.keys(sideByPlayerId).length > 0
+  const entries = buildSongEntries({
+    songs: roundSongs,
+    votes: roundVotes,
+    duplicateGroups: roundDuplicateGroups,
+    groupSongs: roundGroupSongs,
+    sideByPlayerId: isSplit ? sideByPlayerId : null,
+  })
+  const entriesByPool = new Map()
+
+  for (const entry of entries) {
+    const pool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+    if (!entriesByPool.has(pool)) entriesByPool.set(pool, [])
+    entriesByPool.get(pool).push(entry)
+  }
+
+  const winnerIds = new Set()
+  for (const poolEntries of entriesByPool.values()) {
+    const winningScore = Math.max(...poolEntries.map(entry => entry.totalPoints))
+    for (const entry of poolEntries) {
+      if (Math.abs(entry.totalPoints - winningScore) > 1e-9) continue
+      for (const playerId of entry.submitterIds || []) winnerIds.add(playerId)
+    }
+  }
+
+  return [...winnerIds]
+}
+
 export function buildPlayerAwards({
   players = [],
   songs = [],
@@ -88,6 +150,8 @@ export function buildPlayerAwards({
   roundGroups = [],
   scoredRoundIds = new Set(),
   pointsPerPlayer = 10,
+  leaderboard = [],
+  latestScoredRoundId = null,
 }) {
   const awardsByPlayerId = Object.fromEntries(players.map(player => [player.id, []]))
   const scoredSongs = songs.filter(song => scoredRoundIds.has(song.round_id))
@@ -96,6 +160,17 @@ export function buildPlayerAwards({
     submissions: 0,
     words: 0,
   }]))
+
+  const scoredLeaders = leaderboard.filter(row => Number(row.total) > 0)
+  addAward(awardsByPlayerId, idsAtExtreme(scoredLeaders, row => Number(row.total)), AWARDS.currentLeader)
+  addAward(awardsByPlayerId, winningPlayerIdsForRound({
+    roundId: latestScoredRoundId,
+    songs,
+    votes,
+    duplicateGroups,
+    groupSongs,
+    roundGroups,
+  }), AWARDS.latestWinner)
 
   for (const song of scoredSongs) {
     if (!descriptionStats[song.player_id]) {
