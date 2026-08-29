@@ -444,6 +444,165 @@ export function buildGoldenEarScores({
   }))
 }
 
+// Cult Following measures whether a player's points come from a small, loyal core.
+// Each target-voter pair records every ballot where support was possible. Fan affinity
+// balances ballot share, repeat support, lift over a neutral ballot, and sample size.
+// The final score combines that affinity with the concentration of actual vote points
+// and the share supplied by repeat fans. Courtesy points never enter the calculation.
+export function buildCultFollowingScores({
+  songs = [],
+  votes = [],
+  duplicateGroups = [],
+  groupSongs = [],
+  roundGroups = [],
+  scoredRoundIds = new Set(),
+  pointsPerPlayer = 10,
+}) {
+  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const supportByPlayerId = new Map()
+  const epsilon = 1e-9
+
+  function supportPair(playerId, voterId) {
+    if (!supportByPlayerId.has(playerId)) supportByPlayerId.set(playerId, new Map())
+    const supportByVoterId = supportByPlayerId.get(playerId)
+    if (!supportByVoterId.has(voterId)) {
+      supportByVoterId.set(voterId, {
+        voterId,
+        points: 0,
+        neutralPoints: 0,
+        opportunities: 0,
+        supportEvents: 0,
+      })
+    }
+    return supportByVoterId.get(voterId)
+  }
+
+  for (const roundId of scoredRoundIds || []) {
+    const roundSongs = songs.filter(song => song.round_id === roundId)
+    const roundVotes = votes.filter(vote => vote.round_id === roundId)
+    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
+    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
+    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const sideByPlayerId = Object.fromEntries(
+      roundGroups
+        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+        .map(row => [row.player_id, Number(row.group_index)])
+    )
+    const isSplit = Object.keys(sideByPlayerId).length > 0
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      votes: roundVotes,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+      sideByPlayerId: isSplit ? sideByPlayerId : null,
+    })
+    const entryBySongId = new Map()
+    const entriesByPool = new Map()
+
+    for (const entry of entries) {
+      const pool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+      if (!entriesByPool.has(pool)) entriesByPool.set(pool, [])
+      entriesByPool.get(pool).push(entry)
+      for (const songId of entry.member_song_ids || []) entryBySongId.set(songId, entry)
+    }
+
+    for (const [pool, poolEntries] of entriesByPool) {
+      const poolVotes = roundVotes.filter(vote => {
+        const entry = entryBySongId.get(vote.song_id)
+        if (!entry) return false
+        const entryPool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+        return entryPool === pool
+      })
+      const participantIds = new Set(poolEntries.flatMap(entry => entry.submitterIds || []))
+      for (const vote of poolVotes) {
+        if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
+      }
+
+      for (const voterId of participantIds) {
+        const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
+        if (eligibleEntries.length === 0) continue
+
+        const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
+        for (const vote of poolVotes) {
+          if (vote.voter_player_id !== voterId) continue
+          const entry = entryBySongId.get(vote.song_id)
+          if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
+          actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
+        }
+
+        const actualSpent = Object.values(actualPointsByEntryId).reduce((sum, points) => sum + points, 0)
+        const actualScale = actualSpent > budget ? budget / actualSpent : 1
+        const neutralPointsPerEntry = budget / eligibleEntries.length
+        const pointsByPlayerId = new Map()
+        const neutralPointsByPlayerId = new Map()
+
+        for (const entry of eligibleEntries) {
+          const actualPoints = actualPointsByEntryId[entry.id] * actualScale
+          for (const playerId of entry.submitterIds || []) {
+            pointsByPlayerId.set(playerId, (pointsByPlayerId.get(playerId) || 0) + actualPoints)
+            neutralPointsByPlayerId.set(
+              playerId,
+              (neutralPointsByPlayerId.get(playerId) || 0) + neutralPointsPerEntry
+            )
+          }
+        }
+
+        for (const [playerId, neutralPoints] of neutralPointsByPlayerId) {
+          const points = pointsByPlayerId.get(playerId) || 0
+          const pair = supportPair(playerId, voterId)
+          pair.points += points
+          pair.neutralPoints += neutralPoints
+          pair.opportunities += 1
+          if (points > epsilon) pair.supportEvents += 1
+        }
+      }
+    }
+  }
+
+  const results = {}
+  for (const [playerId, supportByVoterId] of supportByPlayerId) {
+    const fans = [...supportByVoterId.values()]
+      .filter(fan => fan.points > epsilon)
+      .map(fan => {
+        const ballotShare = fan.points / (budget * fan.opportunities)
+        const repeatRate = fan.supportEvents / fan.opportunities
+        const preferenceLift = fan.neutralPoints > epsilon ? fan.points / fan.neutralPoints : 0
+        const liftQuality = preferenceLift / (1 + preferenceLift)
+        const sampleConfidence = fan.opportunities / (fan.opportunities + 1)
+        const affinity = Math.cbrt(ballotShare * repeatRate * liftQuality) * sampleConfidence
+        return { ...fan, ballotShare, repeatRate, preferenceLift, affinity }
+      })
+
+    const repeatFans = fans.filter(fan => fan.supportEvents >= 2)
+    if (repeatFans.length === 0) continue
+
+    const totalPoints = fans.reduce((sum, fan) => sum + fan.points, 0)
+    const pointConcentration = fans.reduce((sum, fan) => {
+      const pointShare = fan.points / totalPoints
+      return sum + pointShare * pointShare
+    }, 0)
+    const repeatSupportShare = repeatFans.reduce((sum, fan) => sum + fan.points, 0) / totalPoints
+    const coreFans = [...fans].sort((a, b) => b.points - a.points).slice(0, 2)
+    const corePoints = coreFans.reduce((sum, fan) => sum + fan.points, 0)
+    const coreAffinity = coreFans.reduce((sum, fan) => sum + fan.affinity * fan.points, 0) / corePoints
+    const score = Math.cbrt(pointConcentration * repeatSupportShare * coreAffinity)
+
+    results[playerId] = {
+      score,
+      pointConcentration,
+      repeatSupportShare,
+      coreAffinity,
+      totalPoints,
+      fanCount: fans.length,
+      eligibleFanCount: supportByVoterId.size,
+      repeatFanCount: repeatFans.length,
+      fans,
+    }
+  }
+
+  return results
+}
+
 export function voterHasCompleted(votes = [], roundId, playerId) {
   return votes.some(vote => vote.round_id === roundId && vote.voter_player_id === playerId && Number(vote.points) > 0)
 }

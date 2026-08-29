@@ -1,4 +1,4 @@
-import { buildGoldenEarScores, buildSongEntries } from './scoring.js'
+import { buildCultFollowingScores, buildGoldenEarScores, buildSongEntries } from './scoring.js'
 
 const AWARDS = {
   novelist: {
@@ -28,6 +28,13 @@ const AWARDS = {
     className: 'badge-crowd-starter',
     mark: 'CS',
     title: 'The widest group of players has commented on their submissions.',
+  },
+  cultFollowing: {
+    key: 'cult-following',
+    label: 'Cult Following',
+    className: 'badge-cult-following',
+    mark: 'CF',
+    title: 'Gets the most concentrated repeat support from a small circle of voters. The score accounts for ballot size and every round each fan had the chance to vote for them.',
   },
   goldenEar: {
     key: 'golden-ear',
@@ -138,6 +145,18 @@ export function buildPlayerAwards({
     .map(([id, commenterIds]) => ({ id, commenterCount: commenterIds.size }))
     .filter(row => row.commenterCount > 0)
   addAward(awardsByPlayerId, idsAtExtreme(conversationStarters, row => row.commenterCount), AWARDS.crowdStarter)
+
+  const cultFollowingScores = buildCultFollowingScores({
+    songs,
+    votes,
+    duplicateGroups,
+    groupSongs,
+    roundGroups,
+    scoredRoundIds,
+    pointsPerPlayer,
+  })
+  const cultFollowingRows = Object.entries(cultFollowingScores).map(([id, result]) => ({ id, ...result }))
+  addAward(awardsByPlayerId, idsAtExtreme(cultFollowingRows, row => row.score), AWARDS.cultFollowing)
 
   const goldenEarScores = buildGoldenEarScores({
     songs,

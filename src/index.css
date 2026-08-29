@@ -2280,6 +2280,13 @@ select:focus {
   color: #85401f;
 }
 
+.player-badges .badge-cult-following {
+  border-color: #71385f;
+  background: #f6e5f0;
+  color: #5b244a;
+  box-shadow: 2px 2px 0 rgba(91, 36, 74, 0.14);
+}
+
 .player-badges .badge-golden-ear {
   border-color: #9a6108;
   background: linear-gradient(135deg, #fff2aa, #e4aa2d);
@@ -2846,6 +2853,12 @@ select:focus {
   --medal-color: var(--orange);
   --medal-soft: #fff0e7;
   --medal-pop: #ffc3a4;
+}
+
+.player-medal.badge-cult-following {
+  --medal-color: #71385f;
+  --medal-soft: #f6e5f0;
+  --medal-pop: #d992ba;
 }
 
 .player-medal.badge-golden-ear {
