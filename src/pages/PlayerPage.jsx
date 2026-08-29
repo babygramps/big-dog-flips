@@ -234,7 +234,10 @@ export default function PlayerPage() {
         <section className="empty-state">
           <h1>Player not found</h1>
           <p>This profile is not in the league.</p>
-          <Link className="btn btn-secondary" to="/players">Back to players</Link>
+          <Link className="btn btn-secondary" to="/players">
+            <BackArrowIcon />
+            Back to players
+          </Link>
         </section>
       </main>
     )
@@ -262,7 +265,10 @@ export default function PlayerPage() {
           <p className="eyebrow">Player profile</p>
           <h1>{displayPlayer.name}{isSelf ? ' (you)' : ''}</h1>
         </div>
-        <Link className="btn btn-secondary" to="/players">Back to players</Link>
+        <Link className="btn btn-secondary" to="/players">
+          <BackArrowIcon />
+          Back to players
+        </Link>
       </section>
 
       <section className={`player-profile-hero ${displayPlayer.active ? '' : 'inactive'}`}>
@@ -302,14 +308,6 @@ export default function PlayerPage() {
             <strong>{score}</strong>
             <small>pts</small>
           </span>
-          <span className="player-profile-stat">
-            <strong>{submissionCount}</strong>
-            <small>submissions</small>
-          </span>
-          <span className="player-profile-stat">
-            <strong>{votesCast}</strong>
-            <small>votes cast</small>
-          </span>
           <button
             type="button"
             className="player-profile-stat fair-score-stat"
@@ -319,6 +317,14 @@ export default function PlayerPage() {
             <strong>{fairScore.toFixed(1)}</strong>
             <small>Fair score <span aria-hidden="true">?</span></small>
           </button>
+          <span className="player-profile-stat">
+            <strong>{submissionCount}</strong>
+            <small>submissions</small>
+          </span>
+          <span className="player-profile-stat">
+            <strong>{votesCast}</strong>
+            <small>votes cast</small>
+          </span>
         </div>
       </section>
 
@@ -411,7 +417,6 @@ export default function PlayerPage() {
       <section className="round-section">
         <div className="section-heading">
           <h2>Submissions</h2>
-          <span className="soft-tag">{submissions.length}</span>
         </div>
         {submissions.length === 0 ? (
           <div className="empty-state compact">
@@ -433,6 +438,25 @@ export default function PlayerPage() {
         )}
       </section>
     </main>
+  )
+}
+
+function BackArrowIcon() {
+  return (
+    <svg
+      className="back-arrow-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="m10 5-7 7 7 7" />
+      <path d="M3 12h18" />
+    </svg>
   )
 }
 

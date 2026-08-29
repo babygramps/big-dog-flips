@@ -55,8 +55,6 @@ export default function PlayerListPage() {
     leaderboard,
     latestScoredRoundId: latestScoredRound?.id || null,
   }), [data, scoredRoundIds, settings?.points_per_player, leaderboard, latestScoredRound?.id])
-  const activeCount = data.players.filter(row => row.active).length
-
   if (loading) {
     return (
       <main className="page">
@@ -78,7 +76,6 @@ export default function PlayerListPage() {
       <section className="round-section">
         <div className="section-heading">
           <h2>Standings</h2>
-          <span className="soft-tag">{activeCount} active</span>
         </div>
         {rankedPlayers.length === 0 ? (
           <div className="empty-state compact">
@@ -95,6 +92,7 @@ export default function PlayerListPage() {
                   to={`/players/${row.id}`}
                   key={row.id}
                 >
+                  {isFirstPlace && <FirstPlaceParty />}
                   <span className="rank">{index + 1}</span>
                   <Avatar player={row} linkToProfile={false} />
                   <span className="leader-name">
@@ -116,5 +114,38 @@ export default function PlayerListPage() {
         )}
       </section>
     </main>
+  )
+}
+
+function FirstPlaceParty() {
+  return (
+    <span className="first-place-party" aria-hidden="true">
+      <span className="first-place-party-beams" />
+      <PartyDancer className="dancer-one" pose="reach" />
+      <PartyDancer className="dancer-two" pose="lean" />
+      <PartyDancer className="dancer-three" pose="disco" />
+      <PartyDancer className="dancer-four" pose="shimmy" />
+      <PartyDancer className="dancer-five" pose="jump" />
+      <span className="first-place-note note-one">♪</span>
+      <span className="first-place-note note-two">♫</span>
+      <span className="first-place-note note-three">♬</span>
+      <span className="first-place-note note-four">♩</span>
+      <span className="first-place-note note-five">♪</span>
+      <span className="first-place-note note-six">♫</span>
+      <span className="first-place-note note-seven">♬</span>
+    </span>
+  )
+}
+
+function PartyDancer({ className, pose }) {
+  return (
+    <svg className={`first-place-dancer ${className}`} viewBox="0 0 56 76" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="28" cy="12" r="7" />
+      {pose === 'reach' && <path d="M28 20v27M28 27 15 17 8 25M28 27l13-14 7 5M28 47 16 64M28 47l13 17M10 65h8M39 65h9" />}
+      {pose === 'lean' && <path d="M28 20 25 46M27 27 13 36 7 30M27 27l12 8 9-12M25 46 12 59M25 46l17 12M8 60h7M40 59h9" />}
+      {pose === 'disco' && <path d="M28 20 30 47M29 27 17 33 8 27M29 27l10-17 6-5M30 47 18 65M30 47l15 14M12 66h8M43 62h8" />}
+      {pose === 'shimmy' && <path d="M28 20 25 47M27 28 16 24 10 31M27 28l12 6 8-7M25 47 11 57M25 47l18 10M8 59h8M41 59h9" />}
+      {pose === 'jump' && <path d="M28 20v25M28 27 12 16M28 27l16-11M28 45 14 62M28 45l15 17M8 63h8M41 63h9" />}
+    </svg>
   )
 }
