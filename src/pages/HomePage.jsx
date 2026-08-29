@@ -226,6 +226,7 @@ export default function HomePage() {
               player={player}
               songs={roundData.mySideSongs}
               votes={roundData.mySideVotes}
+              statusVotes={roundData.roundVotes}
               comments={roundData.mySideComments}
               commentLikes={data.commentLikes}
               activePlayers={roundData.mySidePlayers}
@@ -253,6 +254,7 @@ export default function HomePage() {
               groupSongs={roundData.roundGroupSongs}
               playlists={roundData.roundPlaylists}
               allPlayers={appreciationPlayers}
+              pointsTotal={settings?.points_per_player || 10}
               sides={sides}
               onChanged={reload}
             />

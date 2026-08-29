@@ -56,7 +56,7 @@ A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two si
 
 - Sides live in `round_groups` and are assigned once, when the round becomes current. Whoever opens the app first writes them through the `assign_round_groups` RPC, which is first-writer-wins, so simultaneous clients cannot produce two different splits.
 - `src/lib/groups.js` picks the split by minimising how often the same pair lands together, which keeps season-long pairings even. Do not replace it with a plain shuffle.
-- Voting is scoped to your own side. A tab on the voting screen exposes the other side's songs for listening and commenting, with no vote controls and no scores. Song comments follow their song; the general round thread stays on your own side, following its author. The sidebar identifies players who did not submit; vote progress remains visible only for the voter's own side.
+- Voting is scoped to your own side. A tab on the voting screen exposes the other side's songs for listening and commenting, with no vote controls and no scores. Song comments follow their song; the general round thread stays on your own side, following its author. The sidebar shows submission and vote progress for both sides, including partial ballots, without exposing song scores.
 - Appreciation keeps one overall ranking, with the winner determined across both sides, but exposes each side's songs through the same Side A / Side B tabs. Its sidebar shows the final submission and voting status for every assigned player.
 - Duplicate merges may not span sides, enforced in both `create_duplicate_merge` and the admin tool.
 - Late joiners go to the smaller side via `join_round_group`. Sides are never rebalanced mid-round.

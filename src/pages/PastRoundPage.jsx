@@ -107,6 +107,7 @@ export default function PastRoundPage() {
         groupSongs={groupSongs}
         playlists={playlists}
         allPlayers={allPlayers}
+        pointsTotal={settings?.points_per_player || 10}
         sides={sides}
         onChanged={reload}
       />

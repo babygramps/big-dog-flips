@@ -54,28 +54,47 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
   const otherSide = mySide === 0 ? 1 : 0
   const mySidePlayers = isSplit ? activePlayers.filter(row => sides.sideByPlayerId[row.id] === mySide) : activePlayers
   const otherSidePlayers = isSplit ? activePlayers.filter(row => sides.sideByPlayerId[row.id] === otherSide) : []
-  const mySubmittedCount = mySidePlayers.filter(row => submittedIds.has(row.id)).length
+  const playersBySide = isSplit ? [
+    { side: mySide, players: mySidePlayers },
+    { side: otherSide, players: otherSidePlayers },
+  ] : []
 
   return (
     <section className="phase-layout">
       <aside className="side-panel">
         {isSplit ? (
           <>
-            <p className="eyebrow">Your side this week</p>
-            <h2 className={`side-name side-${mySide}`}>{groupLabel(mySide)}</h2>
-            <p className="big-stat">{mySubmittedCount}/{mySidePlayers.length}</p>
+            <p className="eyebrow">This round's sides</p>
             <p>You will hear and vote on these players only.</p>
-            <SideRoster players={mySidePlayers} submittedIds={submittedIds} currentPlayerId={player.id} />
-            <hr />
-            <p className="eyebrow">Also playing this week</p>
-            <h3 className={`side-name side-${otherSide}`}>{groupLabel(otherSide)}</h3>
-            <SideRoster players={otherSidePlayers} submittedIds={submittedIds} currentPlayerId={player.id} muted />
+            <div className="voting-sides">
+              {playersBySide.map(({ side, players: sidePlayers }) => {
+                const submittedCount = sidePlayers.filter(row => submittedIds.has(row.id)).length
+                return (
+                  <div className={`voting-side-roster roster-side-${side}`} key={side}>
+                    <h3 className={`side-name side-${side}`}>
+                      {groupLabel(side)} <span>{submittedCount}/{sidePlayers.length} songs</span>
+                    </h3>
+                    <SideRoster
+                      players={sidePlayers}
+                      submittedIds={submittedIds}
+                      currentPlayerId={player.id}
+                      phase="submission"
+                    />
+                  </div>
+                )
+              })}
+            </div>
           </>
         ) : (
           <>
             <h2>Submission roll call</h2>
             <p className="big-stat">{songs.length}/{activePlayers.length}</p>
-            <SideRoster players={activePlayers} submittedIds={submittedIds} currentPlayerId={player.id} />
+            <SideRoster
+              players={activePlayers}
+              submittedIds={submittedIds}
+              currentPlayerId={player.id}
+              phase="submission"
+            />
           </>
         )}
       </aside>

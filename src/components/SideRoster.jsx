@@ -1,55 +1,62 @@
 import Avatar from './Avatar.jsx'
+import { VOTE_PROGRESS, voteProgressFor } from '../lib/voteProgress.js'
 
 export default function SideRoster({
   players = [],
   submittedIds,
-  completedIds,
+  votePointsByPlayer,
+  pointsTotal = 10,
   currentPlayerId,
-  muted = false,
-  showSubmissionStatus = false,
-  showVoteStatus = false,
-  voteStatusFinal = false,
+  phase = 'submission',
 }) {
   if (players.length === 0) {
     return <p className="muted">Nobody here yet.</p>
   }
 
+  const showVoteStatus = phase === 'voting' || phase === 'appreciation'
+
   return (
-    <div className={`mini-roster ${muted ? 'roster-muted' : ''}`}>
+    <div className="mini-roster">
       {players.map(player => {
         const hasSubmitted = submittedIds?.has(player.id) || false
-        const hasVoted = completedIds?.has(player.id) || false
-        const hasDetailedStatus = showSubmissionStatus || showVoteStatus
-        const isDone = hasDetailedStatus
-          ? (!showSubmissionStatus || hasSubmitted) && (!showVoteStatus || hasVoted)
-          : hasSubmitted || hasVoted
+        const voteProgress = voteProgressFor(
+          votePointsByPlayer?.get(player.id),
+          pointsTotal,
+          { final: phase === 'appreciation' }
+        )
+        const actionState = phase === 'submission'
+          ? hasSubmitted ? VOTE_PROGRESS.COMPLETE : VOTE_PROGRESS.PENDING
+          : voteProgress
 
         return (
           <div
             key={player.id}
-            className={`roster-dot ${isDone ? 'done' : ''} ${player.id === currentPlayerId ? 'is-you' : ''}`}
+            className={`roster-dot action-${actionState} ${player.id === currentPlayerId ? 'is-you' : ''}`}
           >
             <span className="roster-player">
               <Avatar player={player} size="sm" />
               <span>{player.name}{player.id === currentPlayerId ? ' (you)' : ''}</span>
             </span>
-            {hasDetailedStatus && (
-              <span className="roster-statuses">
-                {showSubmissionStatus && (
-                  <span className={`roster-status ${hasSubmitted ? 'is-complete' : 'is-missing'}`}>
-                    {hasSubmitted ? 'Song' : 'No song'}
-                  </span>
-                )}
-                {showVoteStatus && (
-                  <span className={`roster-status ${hasVoted ? 'is-complete' : voteStatusFinal ? 'is-missing' : 'is-pending'}`}>
-                    {hasVoted ? 'Voted' : voteStatusFinal ? 'No vote' : 'Not yet'}
-                  </span>
-                )}
+            <span className="roster-statuses">
+              <span className={`roster-status ${hasSubmitted ? 'is-complete' : phase === 'submission' ? 'is-pending' : 'is-missing'}`}>
+                {hasSubmitted ? phase === 'submission' ? 'Song in' : 'Song' : phase === 'submission' ? 'Not yet' : 'No song'}
               </span>
-            )}
+              {showVoteStatus && (
+                <span className={`roster-status is-${voteProgress}`}>
+                  {voteProgressLabel(voteProgress)}
+                </span>
+              )}
+            </span>
           </div>
         )
       })}
     </div>
   )
+}
+
+function voteProgressLabel(progress) {
+  if (progress === VOTE_PROGRESS.COMPLETE) return 'Voted'
+  if (progress === VOTE_PROGRESS.PARTIAL) return 'Partial'
+  if (progress === VOTE_PROGRESS.MISSING) return 'No vote'
+  return 'Not yet'
 }

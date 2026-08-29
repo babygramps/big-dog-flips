@@ -720,16 +720,39 @@ select:focus {
 }
 
 .roster-dot {
+  --roster-action-color: var(--line);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.45rem;
-  color: var(--quiet);
+  color: var(--ink);
   font-weight: 700;
 }
 
-.roster-dot.done {
-  color: var(--success);
+.roster-dot.action-complete {
+  --roster-action-color: var(--mint);
+}
+
+.roster-dot.action-partial {
+  --roster-action-color: var(--orange);
+}
+
+.roster-dot.action-pending {
+  --roster-action-color: var(--lemon);
+}
+
+.roster-dot.action-missing {
+  --roster-action-color: var(--pink);
+}
+
+.roster-dot .avatar {
+  border-width: 3px;
+  border-color: var(--roster-action-color);
+}
+
+.roster-dot .avatar-link:hover .avatar {
+  border-color: var(--roster-action-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--roster-action-color), transparent 55%);
 }
 
 .roster-player,
@@ -767,6 +790,7 @@ select:focus {
   font-weight: 800;
   line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .roster-status.is-complete {
@@ -779,6 +803,12 @@ select:focus {
   border-color: var(--pink);
   background: var(--pink-soft);
   color: #8e2258;
+}
+
+.roster-status.is-partial {
+  border-color: var(--orange);
+  background: color-mix(in srgb, var(--orange), white 72%);
+  color: #85401f;
 }
 
 .roster-status.is-pending {
@@ -1286,14 +1316,23 @@ select:focus {
 
 .voting-side-roster {
   padding-left: 0.6rem;
-  border-left: 4px solid var(--pink);
+  border-left: 4px solid var(--line);
 }
 
-.voting-side-roster.is-other {
+.voting-side-roster.roster-side-0 {
+  border-left-color: var(--pink);
+}
+
+.voting-side-roster.roster-side-1 {
   border-left-color: var(--aqua);
 }
 
 .voting-side-roster .side-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.45rem;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -2908,12 +2947,6 @@ select:focus {
 
 .roster-dot.is-you {
   color: var(--ink);
-}
-
-.roster-muted .roster-dot {
-  font-size: 0.85rem;
-  font-weight: 600;
-  opacity: 0.72;
 }
 
 @media (prefers-reduced-motion: reduce) {

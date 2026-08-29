@@ -4,6 +4,7 @@ import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
 import { anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
+import { votePointsByPlayer } from '../../lib/voteProgress.js'
 import CommentThread from './CommentThread.jsx'
 import { copyTextFor, searchUrl, serviceLabelForUrl } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
@@ -13,6 +14,7 @@ export default function VotingView({
   player,
   songs,
   votes,
+  statusVotes = votes,
   comments,
   commentLikes,
   activePlayers,
@@ -51,7 +53,6 @@ export default function VotingView({
   const {
     adjustVote,
     draftVotes,
-    hasPendingVotes,
     pointsRemaining,
     pointsUsed,
     savingVotes,
@@ -64,9 +65,11 @@ export default function VotingView({
     onChanged,
   })
 
-  const voters = new Set(votes.filter(vote => Number(vote.points) > 0).map(vote => vote.voter_player_id))
-  if (pointsUsed > 0) voters.add(player.id)
-  if (pointsUsed === 0 && hasPendingVotes) voters.delete(player.id)
+  const rosterVotePoints = useMemo(() => {
+    const pointsByPlayer = votePointsByPlayer(statusVotes)
+    pointsByPlayer.set(player.id, pointsUsed)
+    return pointsByPlayer
+  }, [statusVotes, player.id, pointsUsed])
 
   async function copyOrder() {
     try {
@@ -92,25 +95,26 @@ export default function VotingView({
         {mySide !== null && mySide !== undefined && (
           <div className="voting-sides">
             <p className="eyebrow">This round's sides</p>
-            <div className="voting-side-roster">
+            <div className={`voting-side-roster roster-side-${mySide}`}>
               <h3 className={`side-name side-${mySide}`}>{groupLabel(mySide)}</h3>
               <SideRoster
                 players={mySidePlayers}
                 submittedIds={submittedIds}
-                completedIds={voters}
+                votePointsByPlayer={rosterVotePoints}
+                pointsTotal={pointsTotal}
                 currentPlayerId={player.id}
-                showSubmissionStatus
-                showVoteStatus
+                phase="voting"
               />
             </div>
-            <div className="voting-side-roster is-other">
+            <div className={`voting-side-roster roster-side-${otherSide}`}>
               <h3 className={`side-name side-${otherSide}`}>{groupLabel(otherSide)}</h3>
               <SideRoster
                 players={otherSidePlayers}
                 submittedIds={submittedIds}
+                votePointsByPlayer={rosterVotePoints}
+                pointsTotal={pointsTotal}
                 currentPlayerId={player.id}
-                showSubmissionStatus
-                muted
+                phase="voting"
               />
             </div>
           </div>
@@ -120,10 +124,10 @@ export default function VotingView({
             <SideRoster
               players={activePlayers}
               submittedIds={submittedIds}
-              completedIds={voters}
+              votePointsByPlayer={rosterVotePoints}
+              pointsTotal={pointsTotal}
               currentPlayerId={player.id}
-              showSubmissionStatus
-              showVoteStatus
+              phase="voting"
             />
           </div>
         )}
