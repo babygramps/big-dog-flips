@@ -147,9 +147,10 @@ export default function PlayerPage() {
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
   const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
-  const voteCount = data.votes.filter(vote => (
-    vote.voter_player_id === playerId && scoredRoundIds.has(vote.round_id) && Number(vote.points) > 0
-  )).length
+  const votesCast = data.votes.reduce((total, vote) => {
+    if (vote.voter_player_id !== playerId || !scoredRoundIds.has(vote.round_id)) return total
+    return total + Math.max(0, Number(vote.points) || 0)
+  }, 0)
   const playerAwards = awardsByPlayerId[playerId] || []
 
   async function saveProfile(event) {
@@ -306,7 +307,7 @@ export default function PlayerPage() {
             <small>submissions</small>
           </span>
           <span className="player-profile-stat">
-            <strong>{voteCount}</strong>
+            <strong>{votesCast}</strong>
             <small>votes cast</small>
           </span>
           <button
