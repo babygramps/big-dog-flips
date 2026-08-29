@@ -2268,10 +2268,16 @@ select:focus {
   color: #08677e;
 }
 
-.player-badges .badge-chatter-box {
+.player-badges .badge-community-pillar {
   border-color: var(--pink);
   background: var(--pink-soft);
   color: #9b1c58;
+}
+
+.player-badges .badge-crowd-starter {
+  border-color: var(--orange);
+  background: #fff0e7;
+  color: #85401f;
 }
 
 .player-badges .badge-golden-ear {
@@ -2830,10 +2836,16 @@ select:focus {
   --medal-pop: #8ee7f7;
 }
 
-.player-medal.badge-chatter-box {
+.player-medal.badge-community-pillar {
   --medal-color: var(--pink);
   --medal-soft: var(--pink-soft);
   --medal-pop: #ff91c4;
+}
+
+.player-medal.badge-crowd-starter {
+  --medal-color: var(--orange);
+  --medal-soft: #fff0e7;
+  --medal-pop: #ffc3a4;
 }
 
 .player-medal.badge-golden-ear {

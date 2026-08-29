@@ -1,4 +1,4 @@
-import { buildGoldenEarScores } from './scoring.js'
+import { buildGoldenEarScores, buildSongEntries } from './scoring.js'
 
 const AWARDS = {
   novelist: {
@@ -15,12 +15,19 @@ const AWARDS = {
     mark: '…',
     title: 'Uses the fewest words across scored-round song descriptions, with at least two submissions and one real description.',
   },
-  chatterBox: {
-    key: 'chatter-box',
-    label: 'Chatter Box',
-    className: 'badge-chatter-box',
-    mark: '“ ”',
-    title: 'Has posted the most comments across scored rounds.',
+  communityPillar: {
+    key: 'community-pillar',
+    label: 'Community Pillar',
+    className: 'badge-community-pillar',
+    mark: 'CP',
+    title: 'Has written the most comments across scored rounds.',
+  },
+  crowdStarter: {
+    key: 'crowd-starter',
+    label: 'Crowd Starter',
+    className: 'badge-crowd-starter',
+    mark: 'CS',
+    title: 'The widest group of players has commented on their submissions.',
   },
   goldenEar: {
     key: 'golden-ear',
@@ -99,7 +106,39 @@ export function buildPlayerAwards({
     commentCounts[comment.player_id] = (commentCounts[comment.player_id] || 0) + 1
   }
   const commenters = Object.entries(commentCounts).map(([id, count]) => ({ id, count }))
-  addAward(awardsByPlayerId, idsAtExtreme(commenters, row => row.count), AWARDS.chatterBox)
+  addAward(awardsByPlayerId, idsAtExtreme(commenters, row => row.count), AWARDS.communityPillar)
+
+  const commenterIdsBySubmitter = Object.fromEntries(players.map(player => [player.id, new Set()]))
+  for (const roundId of scoredRoundIds) {
+    const roundSongs = songs.filter(song => song.round_id === roundId)
+    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
+    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
+    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+    })
+    const entryBySongId = new Map()
+    for (const entry of entries) {
+      for (const songId of entry.member_song_ids || []) entryBySongId.set(songId, entry)
+    }
+
+    for (const comment of comments) {
+      if (comment.round_id !== roundId || !comment.song_id || !comment.player_id) continue
+      const entry = entryBySongId.get(comment.song_id)
+      if (!entry) continue
+      for (const submitterId of entry.submitterIds || []) {
+        if (submitterId === comment.player_id) continue
+        if (!commenterIdsBySubmitter[submitterId]) commenterIdsBySubmitter[submitterId] = new Set()
+        commenterIdsBySubmitter[submitterId].add(comment.player_id)
+      }
+    }
+  }
+  const conversationStarters = Object.entries(commenterIdsBySubmitter)
+    .map(([id, commenterIds]) => ({ id, commenterCount: commenterIds.size }))
+    .filter(row => row.commenterCount > 0)
+  addAward(awardsByPlayerId, idsAtExtreme(conversationStarters, row => row.commenterCount), AWARDS.crowdStarter)
 
   const goldenEarScores = buildGoldenEarScores({
     songs,
