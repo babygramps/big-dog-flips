@@ -13,6 +13,7 @@ export default function AppreciationSongCard({
   context = null,
   className = '',
   submitterNote = entry.submitter_note,
+  showListenLink = true,
 }) {
   const entryComments = commentsForEntry(comments, entry)
   const listenUrl = entry.link || searchUrl('youtube', entry)
@@ -33,12 +34,14 @@ export default function AppreciationSongCard({
               <strong>{entry.artist}</strong>
               {entry.album && <span>from {entry.album}</span>}
             </p>
-            <a className="appreciation-listen-link" href={listenUrl} target="_blank" rel="noreferrer">
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M7.25 5.8v8.4L14 10 7.25 5.8Z" />
-              </svg>
-              {listenLabel}
-            </a>
+            {showListenLink && (
+              <a className="appreciation-listen-link" href={listenUrl} target="_blank" rel="noreferrer">
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M7.25 5.8v8.4L14 10 7.25 5.8Z" />
+                </svg>
+                {listenLabel}
+              </a>
+            )}
           </div>
 
           <div className="score-badge" aria-label={`${entry.totalPoints} point${entry.totalPoints === 1 ? '' : 's'}`}>

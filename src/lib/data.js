@@ -10,8 +10,8 @@ const COMMENT_WITH_PLAYER = `*, players!comments_player_id_fkey(${PLAYER_FIELDS}
 
 export const HOME_REALTIME_TABLES = ['rounds', 'songs', 'votes', 'comments', 'comment_likes', 'duplicate_groups', 'duplicate_group_songs', 'players', 'round_groups', 'round_playlists']
 export const ROUNDS_REALTIME_TABLES = ['rounds', 'songs', 'votes', 'duplicate_groups', 'duplicate_group_songs', 'round_groups']
-export const PLAYER_REALTIME_TABLES = ['players', 'rounds', 'songs', 'votes', 'duplicate_groups', 'duplicate_group_songs', 'round_groups']
-export const PLAYER_PROFILE_REALTIME_TABLES = [...PLAYER_REALTIME_TABLES, 'comments', 'comment_likes']
+export const PLAYER_REALTIME_TABLES = ['players', 'rounds', 'songs', 'votes', 'comments', 'duplicate_groups', 'duplicate_group_songs', 'round_groups']
+export const PLAYER_PROFILE_REALTIME_TABLES = [...PLAYER_REALTIME_TABLES, 'comment_likes']
 export const ADMIN_REALTIME_TABLES = ['rounds', 'songs', 'votes', 'duplicate_groups', 'duplicate_group_songs', 'players', 'round_groups']
 
 export const EMPTY_HOME_DATA = {
@@ -41,6 +41,7 @@ export const EMPTY_PLAYER_DATA = {
   rounds: [],
   songs: [],
   votes: [],
+  comments: [],
   groups: [],
   groupSongs: [],
   roundGroups: [],
@@ -48,7 +49,6 @@ export const EMPTY_PLAYER_DATA = {
 
 export const EMPTY_PLAYER_PROFILE_DATA = {
   ...EMPTY_PLAYER_DATA,
-  comments: [],
   commentLikes: [],
 }
 
@@ -180,6 +180,7 @@ export async function fetchPlayerData() {
     { data: rounds },
     { data: songs },
     { data: votes },
+    { data: comments },
     { data: groups },
     { data: groupSongs },
     { data: roundGroups },
@@ -188,6 +189,7 @@ export async function fetchPlayerData() {
     supabase.from('rounds').select('*').order('queue_position'),
     supabase.from('songs').select(SONG_WITH_PLAYER).order('created_at'),
     supabase.from('votes').select('*'),
+    supabase.from('comments').select(COMMENT_WITH_PLAYER).order('created_at'),
     supabase.from('duplicate_groups').select('*'),
     supabase.from('duplicate_group_songs').select('*'),
     supabase.from('round_groups').select('*'),
@@ -198,6 +200,7 @@ export async function fetchPlayerData() {
     rounds: rounds || [],
     songs: songs || [],
     votes: votes || [],
+    comments: comments || [],
     groups: groups || [],
     groupSongs: groupSongs || [],
     roundGroups: roundGroups || [],
@@ -205,15 +208,13 @@ export async function fetchPlayerData() {
 }
 
 export async function fetchPlayerProfileData() {
-  const [playerData, { data: comments }, { data: commentLikes }] = await Promise.all([
+  const [playerData, { data: commentLikes }] = await Promise.all([
     fetchPlayerData(),
-    supabase.from('comments').select(COMMENT_WITH_PLAYER).order('created_at'),
     supabase.from('comment_likes').select('*'),
   ])
 
   return {
     ...playerData,
-    comments: comments || [],
     commentLikes: commentLikes || [],
   }
 }

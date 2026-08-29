@@ -4,6 +4,7 @@ import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_DATA, fetchPlayerData, PLAYER_REALTIME_TABLES } from '../lib/data.js'
+import { buildPlayerAwards } from '../lib/playerAwards.js'
 import { buildLeaderboard, buildSongEntries } from '../lib/scoring.js'
 import { getLeagueContext, getScoredRoundIds } from '../lib/schedule.js'
 
@@ -50,7 +51,6 @@ export default function PlayerListPage() {
       }
     })
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
-  const leader = rankedPlayers.find(row => row.total > 0)
   const latestScoredRound = scoredRounds[scoredRounds.length - 1]
   const latestWinnerIds = useMemo(() => {
     if (!latestScoredRound) return new Set()
@@ -67,6 +67,17 @@ export default function PlayerListPage() {
     })[0]
     return new Set(winner?.submitterIds || [])
   }, [data, latestScoredRound])
+  const awardsByPlayerId = useMemo(() => buildPlayerAwards({
+    players: data.players,
+    songs: data.songs,
+    votes: data.votes,
+    comments: data.comments,
+    duplicateGroups: data.groups,
+    groupSongs: data.groupSongs,
+    roundGroups: data.roundGroups,
+    scoredRoundIds,
+    pointsPerPlayer: settings?.points_per_player || 10,
+  }), [data, scoredRoundIds, settings?.points_per_player])
   const activeCount = data.players.filter(row => row.active).length
 
   if (loading) {
@@ -87,22 +98,6 @@ export default function PlayerListPage() {
         </div>
       </section>
 
-      {leader ? (
-        <Link className="leader-spotlight leader-spotlight-link" to={`/players/${leader.id}`}>
-          <Avatar player={leader} size="xl" linkToProfile={false} />
-          <div>
-            <p className="eyebrow">Current leader</p>
-            <h2>{leader.name}{leader.id === player.id ? ' (you)' : ''}</h2>
-            <p>{leader.total} points</p>
-          </div>
-        </Link>
-      ) : (
-        <section className="empty-state compact">
-          <h2>No scores yet</h2>
-          <p>Standings appear once a round reaches appreciation.</p>
-        </section>
-      )}
-
       <section className="round-section">
         <div className="section-heading">
           <h2>Standings</h2>
@@ -117,10 +112,11 @@ export default function PlayerListPage() {
             {rankedPlayers.map((row, index) => {
               const submissionCount = submissionCounts[row.id] || 0
               const votedRoundCount = votedRoundIdsByPlayer[row.id]?.size || 0
+              const isFirstPlace = index === 0 && row.total > 0
 
               return (
                 <Link
-                  className={`leader-row player-standings-row player-row-link ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
+                  className={`leader-row player-standings-row player-row-link ${isFirstPlace ? 'is-first-place' : ''} ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
                   to={`/players/${row.id}`}
                   key={row.id}
                 >
@@ -133,9 +129,11 @@ export default function PlayerListPage() {
                       {row.active ? '' : ' · inactive'}
                     </small>
                     <span className="player-badges">
-                      {leader?.id === row.id && row.total > 0 && <em className="badge-leader">Current leader</em>}
+                      {isFirstPlace && <em className="badge-leader">Current leader</em>}
                       {latestWinnerIds.has(row.id) && <em className="badge-winner">Latest winner</em>}
-                      {row.id === player.id && <em className="badge-you">Your scorecard</em>}
+                      {(awardsByPlayerId[row.id] || []).map(award => (
+                        <em className={award.className} title={award.title} key={award.key}>{award.label}</em>
+                      ))}
                     </span>
                   </span>
                   <strong>{row.total}</strong>

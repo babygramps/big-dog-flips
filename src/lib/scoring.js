@@ -198,6 +198,51 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
     }))
 }
 
+function fairPointsForPool({ poolEntries, poolVotes, entryBySongId, budget, excludedVoterId = null }) {
+  // Submitters who skip voting still contribute a neutral ballot. People who did not
+  // submit only enter the pool when they cast at least one point.
+  const participantIds = new Set(poolEntries.flatMap(entry => entry.submitterIds || []))
+  for (const vote of poolVotes) {
+    if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
+  }
+  if (excludedVoterId) participantIds.delete(excludedVoterId)
+
+  const filledPointsByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
+  const neutralOpportunityByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
+
+  for (const voterId of participantIds) {
+    const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
+    if (eligibleEntries.length === 0) continue
+
+    const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
+    for (const vote of poolVotes) {
+      if (vote.voter_player_id !== voterId) continue
+      const entry = entryBySongId.get(vote.song_id)
+      if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
+      actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
+    }
+
+    const actualSpent = Object.values(actualPointsByEntryId).reduce((sum, points) => sum + points, 0)
+    const actualScale = actualSpent > budget ? budget / actualSpent : 1
+    const unspentPoints = budget - Math.min(budget, actualSpent)
+    const neutralFill = unspentPoints / eligibleEntries.length
+    const neutralOpportunity = budget / eligibleEntries.length
+
+    for (const entry of eligibleEntries) {
+      filledPointsByEntryId[entry.id] += actualPointsByEntryId[entry.id] * actualScale + neutralFill
+      neutralOpportunityByEntryId[entry.id] += neutralOpportunity
+    }
+  }
+
+  return Object.fromEntries(poolEntries.map(entry => {
+    const neutralOpportunity = neutralOpportunityByEntryId[entry.id]
+    const fairPoints = neutralOpportunity > 0
+      ? budget * filledPointsByEntryId[entry.id] / neutralOpportunity
+      : 0
+    return [entry.id, fairPoints]
+  }))
+}
+
 // Experimental vanity score. Each submitter is treated as holding a complete ballot:
 // actual eligible votes stay as cast, while any unspent budget is divided evenly among
 // the entries they could vote for. The result is then compared with that entry's neutral
@@ -251,45 +296,10 @@ export function buildFairScores({
         const entryPool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
         return entryPool === pool
       })
-      // A submitter who skips voting must still contribute a neutral ballot. People who
-      // did not submit only enter the pool if they actually cast at least one point.
-      const participantIds = new Set(poolEntries.flatMap(entry => entry.submitterIds || []))
-      for (const vote of poolVotes) {
-        if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
-      }
-
-      const filledPointsByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
-      const neutralOpportunityByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
-
-      for (const voterId of participantIds) {
-        const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
-        if (eligibleEntries.length === 0) continue
-
-        const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
-        for (const vote of poolVotes) {
-          if (vote.voter_player_id !== voterId) continue
-          const entry = entryBySongId.get(vote.song_id)
-          if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
-          actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
-        }
-
-        const actualSpent = Object.values(actualPointsByEntryId).reduce((sum, points) => sum + points, 0)
-        const actualScale = actualSpent > budget ? budget / actualSpent : 1
-        const unspentPoints = budget - Math.min(budget, actualSpent)
-        const neutralFill = unspentPoints / eligibleEntries.length
-        const neutralOpportunity = budget / eligibleEntries.length
-
-        for (const entry of eligibleEntries) {
-          filledPointsByEntryId[entry.id] += actualPointsByEntryId[entry.id] * actualScale + neutralFill
-          neutralOpportunityByEntryId[entry.id] += neutralOpportunity
-        }
-      }
+      const fairPointsByEntryId = fairPointsForPool({ poolEntries, poolVotes, entryBySongId, budget })
 
       for (const entry of poolEntries) {
-        const neutralOpportunity = neutralOpportunityByEntryId[entry.id]
-        const fairPoints = neutralOpportunity > 0
-          ? budget * filledPointsByEntryId[entry.id] / neutralOpportunity
-          : 0
+        const fairPoints = fairPointsByEntryId[entry.id]
 
         for (const playerId of entry.submitterIds || []) {
           if (!fairScores[playerId]) fairScores[playerId] = { total: 0, byRound: {} }
@@ -301,6 +311,129 @@ export function buildFairScores({
   }
 
   return fairScores
+}
+
+// Golden Ear measures how closely each ballot anticipated the rest of its pool's taste.
+// Popularity is calculated with the fair-score model above, but with the voter being
+// evaluated removed so their own points cannot improve their result. A song's quality
+// blends its fair-score distance from the field (70%) with its percentile rank (30%),
+// which gives a close second nearly as much credit as the winner. Ballot points weight
+// that quality, partial ballots contribute proportionally, and a neutral prior tempers
+// tiny samples.
+export function buildGoldenEarScores({
+  songs = [],
+  votes = [],
+  duplicateGroups = [],
+  groupSongs = [],
+  roundGroups = [],
+  scoredRoundIds = new Set(),
+  pointsPerPlayer = 10,
+}) {
+  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const tallies = {}
+  const epsilon = 1e-9
+
+  for (const roundId of scoredRoundIds || []) {
+    const roundSongs = songs.filter(song => song.round_id === roundId)
+    const roundVotes = votes.filter(vote => vote.round_id === roundId)
+    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
+    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
+    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const sideByPlayerId = Object.fromEntries(
+      roundGroups
+        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+        .map(row => [row.player_id, Number(row.group_index)])
+    )
+    const isSplit = Object.keys(sideByPlayerId).length > 0
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      votes: roundVotes,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+      sideByPlayerId: isSplit ? sideByPlayerId : null,
+    })
+    const entryBySongId = new Map()
+    const entriesByPool = new Map()
+
+    for (const entry of entries) {
+      const pool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+      if (!entriesByPool.has(pool)) entriesByPool.set(pool, [])
+      entriesByPool.get(pool).push(entry)
+      for (const songId of entry.member_song_ids || []) entryBySongId.set(songId, entry)
+    }
+
+    for (const [pool, poolEntries] of entriesByPool) {
+      const poolVotes = roundVotes.filter(vote => {
+        const entry = entryBySongId.get(vote.song_id)
+        if (!entry) return false
+        const entryPool = entry.side === 0 || entry.side === 1 ? entry.side : 'all'
+        return entryPool === pool
+      })
+      const voterIds = new Set(
+        poolVotes
+          .filter(vote => Number(vote.points) > 0)
+          .map(vote => vote.voter_player_id)
+      )
+
+      for (const voterId of voterIds) {
+        const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
+        if (eligibleEntries.length < 2) continue
+
+        const ballotPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
+        for (const vote of poolVotes) {
+          if (vote.voter_player_id !== voterId) continue
+          const entry = entryBySongId.get(vote.song_id)
+          if (!entry || ballotPointsByEntryId[entry.id] === undefined) continue
+          ballotPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
+        }
+
+        const spent = Object.values(ballotPointsByEntryId).reduce((sum, points) => sum + points, 0)
+        if (spent <= 0) continue
+
+        const fairPointsByEntryId = fairPointsForPool({
+          poolEntries,
+          poolVotes,
+          entryBySongId,
+          budget,
+          excludedVoterId: voterId,
+        })
+        const eligibleFairScores = eligibleEntries.map(entry => fairPointsByEntryId[entry.id] || 0)
+        const minimumFairScore = Math.min(...eligibleFairScores)
+        const maximumFairScore = Math.max(...eligibleFairScores)
+        const fairScoreRange = maximumFairScore - minimumFairScore
+        let ballotAccuracy = 0
+
+        for (const entry of eligibleEntries) {
+          const points = ballotPointsByEntryId[entry.id]
+          if (points <= 0) continue
+
+          const fairScore = fairPointsByEntryId[entry.id] || 0
+          const lowerCount = eligibleFairScores.filter(score => score < fairScore - epsilon).length
+          const tiedCount = eligibleFairScores.filter(score => Math.abs(score - fairScore) <= epsilon).length
+          const percentile = (lowerCount + (tiedCount - 1) / 2) / (eligibleEntries.length - 1)
+          const rangePosition = fairScoreRange > epsilon
+            ? (fairScore - minimumFairScore) / fairScoreRange
+            : 0.5
+          const popularityQuality = 0.7 * rangePosition + 0.3 * percentile
+          ballotAccuracy += points / spent * popularityQuality
+        }
+
+        const completion = Math.min(1, spent / budget)
+        if (!tallies[voterId]) tallies[voterId] = { accuracyTotal: 0, ballotWeight: 0, ballots: 0, byRound: {} }
+        tallies[voterId].accuracyTotal += ballotAccuracy * completion
+        tallies[voterId].ballotWeight += completion
+        tallies[voterId].ballots += 1
+        tallies[voterId].byRound[roundId] = ballotAccuracy
+      }
+    }
+  }
+
+  const neutralPriorWeight = 2
+  return Object.fromEntries(Object.entries(tallies).map(([playerId, tally]) => {
+    const rawScore = tally.ballotWeight > 0 ? tally.accuracyTotal / tally.ballotWeight : 0.5
+    const score = (tally.accuracyTotal + 0.5 * neutralPriorWeight) / (tally.ballotWeight + neutralPriorWeight)
+    return [playerId, { ...tally, rawScore, score }]
+  }))
 }
 
 export function voterHasCompleted(votes = [], roundId, playerId) {

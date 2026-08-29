@@ -450,6 +450,7 @@ function PlayerSubmission({ submission, comments, commentLikes, player, onChange
       isTopEntry={rank === 1 && entry.totalPoints > 0}
       className="player-submission-card"
       submitterNote={song?.submitter_note ?? entry.submitter_note}
+      showListenLink={false}
       context={(
         <>
           <div>
