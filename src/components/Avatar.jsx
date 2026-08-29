@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { preloadPlayerPage } from '../lib/routeLoaders.js'
 
 const COLORS = ['#ff7ab6', '#65d6ff', '#ffe66d', '#a78bfa', '#6ee7b7', '#ff9f6e']
 
@@ -22,14 +23,25 @@ export default function Avatar({ player, size = 'md', label, linkToProfile = tru
 
   const avatar = (
     <span className={`avatar avatar-${size}`} style={style} aria-label={canLinkToProfile ? undefined : name}>
-      <img src={player?.avatar_url || '/default-avatar.png'} alt="" />
+      <img
+        src={player?.avatar_url || '/default-avatar-v2.webp'}
+        alt=""
+        decoding="async"
+        loading={size === 'hero' ? 'eager' : 'lazy'}
+      />
     </span>
   )
 
   if (!canLinkToProfile) return avatar
 
   return (
-    <Link className="avatar-link" to={`/players/${player.id}`} aria-label={`View ${name}'s profile`}>
+    <Link
+      className="avatar-link"
+      to={`/players/${player.id}`}
+      aria-label={`View ${name}'s profile`}
+      onFocus={preloadPlayerPage}
+      onPointerEnter={preloadPlayerPage}
+    >
       {avatar}
     </Link>
   )

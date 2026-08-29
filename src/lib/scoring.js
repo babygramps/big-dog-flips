@@ -13,6 +13,38 @@ function uniqueById(items) {
   return out
 }
 
+function rowsBy(items, keyFor) {
+  const index = new Map()
+  for (const item of items || []) {
+    const key = keyFor(item)
+    const rows = index.get(key) || []
+    rows.push(item)
+    index.set(key, rows)
+  }
+  return index
+}
+
+function scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups = [] }) {
+  return {
+    songs: rowsBy(songs, row => row.round_id),
+    votes: rowsBy(votes, row => row.round_id),
+    duplicateGroups: rowsBy(duplicateGroups, row => row.round_id),
+    groupSongs: rowsBy(groupSongs, row => row.group_id),
+    roundGroups: rowsBy(roundGroups, row => row.round_id),
+  }
+}
+
+function scoringRowsForRound(index, roundId) {
+  const roundDuplicateGroups = index.duplicateGroups.get(roundId) || []
+  return {
+    roundSongs: index.songs.get(roundId) || [],
+    roundVotes: index.votes.get(roundId) || [],
+    roundDuplicateGroups,
+    roundGroupSongs: roundDuplicateGroups.flatMap(group => index.groupSongs.get(group.id) || []),
+    roundGroupRows: index.roundGroups.get(roundId) || [],
+  }
+}
+
 export function groupMembership(groupSongs = []) {
   const songToGroup = {}
   const groupToSongs = {}
@@ -38,8 +70,13 @@ function sideForPlayers(sideByPlayerId, playerIds = []) {
 
 export function buildSongEntries({ songs = [], votes = [], duplicateGroups = [], groupSongs = [], sideByPlayerId = null }) {
   const songMap = Object.fromEntries((songs || []).map(song => [song.id, song]))
-  const groupMap = Object.fromEntries((duplicateGroups || []).map(group => [group.id, group]))
   const { songToGroup, groupToSongs } = groupMembership(groupSongs)
+  const votesBySongId = new Map()
+  for (const vote of votes || []) {
+    const songVotes = votesBySongId.get(vote.song_id) || []
+    songVotes.push(vote)
+    votesBySongId.set(vote.song_id, songVotes)
+  }
   const usedSongIds = new Set()
   const entries = []
 
@@ -51,9 +88,9 @@ export function buildSongEntries({ songs = [], votes = [], duplicateGroups = [],
     memberSongs.forEach(song => usedSongIds.add(song.id))
     const submitters = uniqueById(memberSongs.map(song => song.players || song.player).filter(Boolean))
     const submitterIds = new Set(memberSongs.map(song => song.player_id).filter(Boolean))
-    const memberSet = new Set(memberSongs.map(song => song.id))
-    const eligibleVotes = (votes || []).filter(vote => memberSet.has(vote.song_id) && !submitterIds.has(vote.voter_player_id))
-    const ineligibleVotes = (votes || []).filter(vote => memberSet.has(vote.song_id) && submitterIds.has(vote.voter_player_id))
+    const memberVotes = memberSongs.flatMap(song => votesBySongId.get(song.id) || [])
+    const eligibleVotes = memberVotes.filter(vote => !submitterIds.has(vote.voter_player_id))
+    const ineligibleVotes = memberVotes.filter(vote => submitterIds.has(vote.voter_player_id))
     const votePoints = eligibleVotes.reduce((sum, vote) => sum + (Number(vote.points) || 0), 0)
     const courtesyPoints = Math.max(0, submitterIds.size - 1)
     const canonical = songMap[group.canonical_song_id] || memberSongs[0]
@@ -88,8 +125,9 @@ export function buildSongEntries({ songs = [], votes = [], duplicateGroups = [],
   for (const song of songs || []) {
     if (usedSongIds.has(song.id) || songToGroup[song.id]) continue
 
-    const eligibleVotes = (votes || []).filter(vote => vote.song_id === song.id && vote.voter_player_id !== song.player_id)
-    const ineligibleVotes = (votes || []).filter(vote => vote.song_id === song.id && vote.voter_player_id === song.player_id)
+    const songVotes = votesBySongId.get(song.id) || []
+    const eligibleVotes = songVotes.filter(vote => vote.voter_player_id !== song.player_id)
+    const ineligibleVotes = songVotes.filter(vote => vote.voter_player_id === song.player_id)
     const votePoints = eligibleVotes.reduce((sum, vote) => sum + (Number(vote.points) || 0), 0)
 
     entries.push({
@@ -144,7 +182,9 @@ export function entrySubmitterText(entry) {
 export function buildLeaderboard({ players = [], rounds = [], songs = [], votes = [], duplicateGroups = [], groupSongs = [], scoredRoundIds = new Set() }) {
   const playerMap = Object.fromEntries((players || []).map(player => [player.id, player]))
   const roundMap = Object.fromEntries((rounds || []).map(round => [round.id, round]))
+  const activePlayerIds = new Set((players || []).filter(player => player.active).map(player => player.id))
   const tally = {}
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs })
 
   for (const player of players || []) {
     tally[player.id] = {
@@ -158,15 +198,11 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
   }
 
   for (const roundId of scoredRoundIds || []) {
-    const roundSongs = songs.filter(song => song.round_id === roundId)
-    const roundVotes = votes.filter(vote => vote.round_id === roundId)
-    const roundGroups = duplicateGroups.filter(group => group.round_id === roundId)
-    const groupIds = new Set(roundGroups.map(group => group.id))
-    const roundGroupSongs = groupSongs.filter(row => groupIds.has(row.group_id))
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs } = scoringRowsForRound(roundIndex, roundId)
     const entries = buildSongEntries({
       songs: roundSongs,
       votes: roundVotes,
-      duplicateGroups: roundGroups,
+      duplicateGroups: roundDuplicateGroups,
       groupSongs: roundGroupSongs,
     })
 
@@ -190,7 +226,7 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
   }
 
   return Object.values(tally)
-    .filter(player => player.total > 0 || players.some(p => p.id === player.id && p.active))
+    .filter(player => player.total > 0 || activePlayerIds.has(player.id))
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
     .map(player => ({
       ...player,
@@ -206,6 +242,7 @@ function fairPointsForPool({ poolEntries, poolVotes, entryBySongId, budget, excl
     if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
   }
   if (excludedVoterId) participantIds.delete(excludedVoterId)
+  const votesByVoterId = rowsBy(poolVotes, vote => vote.voter_player_id)
 
   const filledPointsByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
   const neutralOpportunityByEntryId = Object.fromEntries(poolEntries.map(entry => [entry.id, 0]))
@@ -215,8 +252,7 @@ function fairPointsForPool({ poolEntries, poolVotes, entryBySongId, budget, excl
     if (eligibleEntries.length === 0) continue
 
     const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
-    for (const vote of poolVotes) {
-      if (vote.voter_player_id !== voterId) continue
+    for (const vote of votesByVoterId.get(voterId) || []) {
       const entry = entryBySongId.get(vote.song_id)
       if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
       actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
@@ -259,16 +295,13 @@ export function buildFairScores({
 }) {
   const budget = Math.max(1, Number(pointsPerPlayer) || 10)
   const fairScores = {}
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })
 
   for (const roundId of scoredRoundIds || []) {
-    const roundSongs = songs.filter(song => song.round_id === roundId)
-    const roundVotes = votes.filter(vote => vote.round_id === roundId)
-    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
-    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
-    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs, roundGroupRows } = scoringRowsForRound(roundIndex, roundId)
     const sideByPlayerId = Object.fromEntries(
-      roundGroups
-        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+      roundGroupRows
+        .filter(row => Number(row.group_index) === 0 || Number(row.group_index) === 1)
         .map(row => [row.player_id, Number(row.group_index)])
     )
     const isSplit = Object.keys(sideByPlayerId).length > 0
@@ -332,16 +365,13 @@ export function buildGoldenEarScores({
   const budget = Math.max(1, Number(pointsPerPlayer) || 10)
   const tallies = {}
   const epsilon = 1e-9
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })
 
   for (const roundId of scoredRoundIds || []) {
-    const roundSongs = songs.filter(song => song.round_id === roundId)
-    const roundVotes = votes.filter(vote => vote.round_id === roundId)
-    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
-    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
-    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs, roundGroupRows } = scoringRowsForRound(roundIndex, roundId)
     const sideByPlayerId = Object.fromEntries(
-      roundGroups
-        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+      roundGroupRows
+        .filter(row => Number(row.group_index) === 0 || Number(row.group_index) === 1)
         .map(row => [row.player_id, Number(row.group_index)])
     )
     const isSplit = Object.keys(sideByPlayerId).length > 0
@@ -374,14 +404,14 @@ export function buildGoldenEarScores({
           .filter(vote => Number(vote.points) > 0)
           .map(vote => vote.voter_player_id)
       )
+      const votesByVoterId = rowsBy(poolVotes, vote => vote.voter_player_id)
 
       for (const voterId of voterIds) {
         const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
         if (eligibleEntries.length < 2) continue
 
         const ballotPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
-        for (const vote of poolVotes) {
-          if (vote.voter_player_id !== voterId) continue
+        for (const vote of votesByVoterId.get(voterId) || []) {
           const entry = entryBySongId.get(vote.song_id)
           if (!entry || ballotPointsByEntryId[entry.id] === undefined) continue
           ballotPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)
@@ -461,6 +491,7 @@ export function buildAudienceScores({
   const budget = Math.max(1, Number(pointsPerPlayer) || 10)
   const supportByPlayerId = new Map()
   const epsilon = 1e-9
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })
 
   function supportPair(playerId, voterId) {
     if (!supportByPlayerId.has(playerId)) supportByPlayerId.set(playerId, new Map())
@@ -478,14 +509,10 @@ export function buildAudienceScores({
   }
 
   for (const roundId of scoredRoundIds || []) {
-    const roundSongs = songs.filter(song => song.round_id === roundId)
-    const roundVotes = votes.filter(vote => vote.round_id === roundId)
-    const roundDuplicateGroups = duplicateGroups.filter(group => group.round_id === roundId)
-    const duplicateGroupIds = new Set(roundDuplicateGroups.map(group => group.id))
-    const roundGroupSongs = groupSongs.filter(row => duplicateGroupIds.has(row.group_id))
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs, roundGroupRows } = scoringRowsForRound(roundIndex, roundId)
     const sideByPlayerId = Object.fromEntries(
-      roundGroups
-        .filter(row => row.round_id === roundId && (Number(row.group_index) === 0 || Number(row.group_index) === 1))
+      roundGroupRows
+        .filter(row => Number(row.group_index) === 0 || Number(row.group_index) === 1)
         .map(row => [row.player_id, Number(row.group_index)])
     )
     const isSplit = Object.keys(sideByPlayerId).length > 0
@@ -517,14 +544,14 @@ export function buildAudienceScores({
       for (const vote of poolVotes) {
         if (Number(vote.points) > 0) participantIds.add(vote.voter_player_id)
       }
+      const votesByVoterId = rowsBy(poolVotes, vote => vote.voter_player_id)
 
       for (const voterId of participantIds) {
         const eligibleEntries = poolEntries.filter(entry => !(entry.submitterIds || []).includes(voterId))
         if (eligibleEntries.length === 0) continue
 
         const actualPointsByEntryId = Object.fromEntries(eligibleEntries.map(entry => [entry.id, 0]))
-        for (const vote of poolVotes) {
-          if (vote.voter_player_id !== voterId) continue
+        for (const vote of votesByVoterId.get(voterId) || []) {
           const entry = entryBySongId.get(vote.song_id)
           if (!entry || actualPointsByEntryId[entry.id] === undefined) continue
           actualPointsByEntryId[entry.id] += Math.max(0, Number(vote.points) || 0)

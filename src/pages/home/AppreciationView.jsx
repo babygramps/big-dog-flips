@@ -4,6 +4,7 @@ import { groupLabel } from '../../lib/groups.js'
 import { buildSongEntries, rankEntries } from '../../lib/scoring.js'
 import { VOTE_PROGRESS, votePointsByPlayer, voteProgressFor } from '../../lib/voteProgress.js'
 import AppreciationSongCard from './AppreciationSongCard.jsx'
+import { indexCommentLikes, indexCommentsBySongId } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
 
 export default function AppreciationView({ round, player, songs, votes, comments, commentLikes, duplicateGroups, groupSongs, playlists = [], allPlayers = [], pointsTotal = 10, sides, onChanged }) {
@@ -18,6 +19,8 @@ export default function AppreciationView({ round, player, songs, votes, comments
   const rankedEntries = useMemo(() => rankEntries(entries), [entries])
   const submittedIds = useMemo(() => new Set(songs.map(song => song.player_id)), [songs])
   const rosterVotePoints = useMemo(() => votePointsByPlayer(votes), [votes])
+  const commentsBySongId = useMemo(() => indexCommentsBySongId(comments), [comments])
+  const commentLikesIndex = useMemo(() => indexCommentLikes(commentLikes), [commentLikes])
   const voteCounts = useMemo(() => allPlayers.reduce((counts, rosterPlayer) => {
     const progress = voteProgressFor(rosterVotePoints.get(rosterPlayer.id), pointsTotal, { final: true })
     if (progress === VOTE_PROGRESS.COMPLETE) counts.complete += 1
@@ -114,7 +117,9 @@ export default function AppreciationView({ round, player, songs, votes, comments
             key={entry.id}
             entry={entry}
             comments={comments}
+            commentsBySongId={commentsBySongId}
             commentLikes={commentLikes}
+            commentLikesIndex={commentLikesIndex}
             player={player}
             roundId={round.id}
             onChanged={onChanged}

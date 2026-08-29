@@ -1,17 +1,26 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { fetchLeagueSettings, fetchStoredPlayer } from './lib/data.js'
 import { clearPlayer, getStoredPlayer, storePlayer } from './lib/identity.js'
+import {
+  loadAdminPage,
+  loadJoinScreen,
+  loadPastRoundPage,
+  loadPlayerListPage,
+  loadPlayerPage,
+  loadRoundsPage,
+} from './lib/routeLoaders.js'
 import { isSupabaseConfigured, supabase } from './lib/supabase.js'
 
-import AdminPage from './pages/SettingsPage.jsx'
 import HomePage from './pages/HomePage.jsx'
-import JoinScreen from './pages/JoinScreen.jsx'
 import Nav from './components/Nav.jsx'
-import PastRoundPage from './pages/PastRoundPage.jsx'
-import PlayerPage from './pages/PlayerPage.jsx'
-import PlayerListPage from './pages/PlayerListPage.jsx'
-import RoundsPage from './pages/QueuePage.jsx'
+
+const AdminPage = lazy(loadAdminPage)
+const JoinScreen = lazy(loadJoinScreen)
+const PastRoundPage = lazy(loadPastRoundPage)
+const PlayerPage = lazy(loadPlayerPage)
+const PlayerListPage = lazy(loadPlayerListPage)
+const RoundsPage = lazy(loadRoundsPage)
 
 export const PlayerContext = createContext(null)
 export const SettingsContext = createContext(null)
@@ -39,6 +48,14 @@ function SetupRequired() {
   )
 }
 
+function RouteFallback() {
+  return (
+    <main className="page">
+      <p className="muted">Loading...</p>
+    </main>
+  )
+}
+
 export default function App() {
   const [player, setPlayer] = useState(getStoredPlayer())
   const [settings, setSettings] = useState(null)
@@ -53,22 +70,26 @@ export default function App() {
     let mounted = true
 
     async function boot() {
-      const nextSettings = await fetchLeagueSettings()
-      if (mounted) setSettings(nextSettings)
-
       const stored = getStoredPlayer()
+      const [nextSettings, storedPlayer] = await Promise.all([
+        fetchLeagueSettings(),
+        stored?.id ? fetchStoredPlayer(stored.id) : Promise.resolve(null),
+      ])
+      if (!mounted) return
+
+      setSettings(nextSettings)
       if (stored?.id) {
-        const data = await fetchStoredPlayer(stored.id)
+        const data = storedPlayer
         if (data?.active) {
           storePlayer(data)
-          if (mounted) setPlayer(data)
+          setPlayer(data)
         } else {
           clearPlayer()
-          if (mounted) setPlayer(null)
+          setPlayer(null)
         }
       }
 
-      if (mounted) setLoading(false)
+      setLoading(false)
     }
 
     boot()
@@ -108,7 +129,7 @@ export default function App() {
     return () => supabase.removeChannel(channel)
   }, [player?.id])
 
-  function handleJoin(nextPlayer) {
+  const handleJoin = useCallback(nextPlayer => {
     if (!nextPlayer?.active) {
       clearPlayer()
       setPlayer(null)
@@ -117,9 +138,9 @@ export default function App() {
 
     storePlayer(nextPlayer)
     setPlayer(nextPlayer)
-  }
+  }, [])
 
-  function handlePlayerUpdate(nextPlayer) {
+  const handlePlayerUpdate = useCallback(nextPlayer => {
     if (!nextPlayer?.active) {
       clearPlayer()
       setPlayer(null)
@@ -128,12 +149,19 @@ export default function App() {
 
     storePlayer(nextPlayer)
     setPlayer(nextPlayer)
-  }
+  }, [])
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     clearPlayer()
     setPlayer(null)
-  }
+  }, [])
+
+  const playerContext = useMemo(() => ({
+    player,
+    setPlayer: handlePlayerUpdate,
+    logout: handleLogout,
+  }), [player, handlePlayerUpdate, handleLogout])
+  const settingsContext = useMemo(() => ({ settings, setSettings }), [settings])
 
   if (!isSupabaseConfigured) return <SetupRequired />
 
@@ -148,30 +176,34 @@ export default function App() {
 
   if (!player) {
     return (
-      <SettingsContext.Provider value={{ settings, setSettings }}>
-        <JoinScreen onJoin={handleJoin} />
+      <SettingsContext.Provider value={settingsContext}>
+        <Suspense fallback={<RouteFallback />}>
+          <JoinScreen onJoin={handleJoin} settings={settings} />
+        </Suspense>
       </SettingsContext.Provider>
     )
   }
 
   return (
-    <PlayerContext.Provider value={{ player, setPlayer: handlePlayerUpdate, logout: handleLogout }}>
-      <SettingsContext.Provider value={{ settings, setSettings }}>
+    <PlayerContext.Provider value={playerContext}>
+      <SettingsContext.Provider value={settingsContext}>
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/rounds" element={<RoundsPage />} />
-            <Route path="/rounds/:roundId" element={<PastRoundPage />} />
-            <Route path="/players" element={<PlayerListPage />} />
-            <Route path="/players/:playerId" element={<PlayerPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/queue" element={<Navigate to="/rounds" replace />} />
-            <Route path="/leaderboard" element={<Navigate to="/players" replace />} />
-            <Route path="/archive" element={<Navigate to="/rounds" replace />} />
-            <Route path="/history" element={<Navigate to="/rounds" replace />} />
-            <Route path="/settings" element={<Navigate to="/admin" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/rounds" element={<RoundsPage />} />
+              <Route path="/rounds/:roundId" element={<PastRoundPage />} />
+              <Route path="/players" element={<PlayerListPage />} />
+              <Route path="/players/:playerId" element={<PlayerPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/queue" element={<Navigate to="/rounds" replace />} />
+              <Route path="/leaderboard" element={<Navigate to="/players" replace />} />
+              <Route path="/archive" element={<Navigate to="/rounds" replace />} />
+              <Route path="/history" element={<Navigate to="/rounds" replace />} />
+              <Route path="/settings" element={<Navigate to="/admin" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
           <Nav />
         </BrowserRouter>
       </SettingsContext.Provider>

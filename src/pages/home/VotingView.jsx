@@ -6,7 +6,7 @@ import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
 import { votePointsByPlayer } from '../../lib/voteProgress.js'
 import CommentThread from './CommentThread.jsx'
-import { copyTextFor, searchUrl, serviceLabelForUrl } from './homeUtils.js'
+import { copyTextFor, indexCommentLikes, indexCommentsBySongId, searchUrl, serviceLabelForUrl } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
 
 export default function VotingView({
@@ -45,6 +45,8 @@ export default function VotingView({
 
   const activeSongs = isViewingOther ? otherOrderedSongs : orderedSongs
   const activeComments = isViewingOther ? otherSideComments : comments
+  const commentsBySongId = useMemo(() => indexCommentsBySongId(activeComments), [activeComments])
+  const commentLikesIndex = useMemo(() => indexCommentLikes(commentLikes), [commentLikes])
   const activeSide = isViewingOther ? otherSide : (mySide ?? 0)
   const activePlaylists = playlists.filter(playlist => playlist.group_index === activeSide)
   const mySidePlayers = mySide === null ? activePlayers : allPlayers.filter(row => sides.sideByPlayerId[row.id] === mySide)
@@ -179,7 +181,7 @@ export default function VotingView({
           <>
             {activeSongs.map(song => {
               const isOwn = !isViewingOther && song.player_id === player.id
-              const songComments = activeComments.filter(comment => comment.song_id === song.id)
+              const songComments = commentsBySongId.get(song.id) || []
               const currentVote = draftVotes[song.id] || 0
               return (
                 <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote > 0 ? 'has-votes' : ''}`} key={song.id}>
@@ -204,6 +206,7 @@ export default function VotingView({
                   <CommentThread
                     comments={songComments}
                     commentLikes={commentLikes}
+                    commentLikesIndex={commentLikesIndex}
                     player={player}
                     revealAuthors={false}
                     anonymousLabelFor={anonymousLabelFor}
@@ -243,7 +246,7 @@ export default function VotingView({
           <section className="self-vote-modal" role="dialog" aria-modal="true" aria-labelledby="self-vote-title" onMouseDown={event => event.stopPropagation()}>
             <p className="eyebrow">Nice try</p>
             <h2 id="self-vote-title">You can’t vote for your own song.</h2>
-            <img className="self-vote-image" src="/oopsies-dog.png" alt="A dog giving a skeptical side-eye" />
+            <img className="self-vote-image" src="/oopsies-dog-v2.webp" alt="A dog giving a skeptical side-eye" decoding="async" />
             <button type="button" className="btn btn-primary" onClick={() => setSelfVoteSong(null)}>Oopsies</button>
           </section>
         </div>

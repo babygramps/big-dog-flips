@@ -1,14 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Countdown from '../components/Countdown.jsx'
 import { usePlayer, useSettings } from '../App.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
-import { EMPTY_HOME_DATA, fetchHomeData, HOME_REALTIME_TABLES } from '../lib/data.js'
+import {
+  EMPTY_HOME_CORE_DATA,
+  EMPTY_HOME_ROUND_DATA,
+  fetchHomeCoreData,
+  fetchHomeRoundData,
+  homeRoundRealtimeTables,
+  HOME_CORE_REALTIME_TABLES,
+} from '../lib/data.js'
 import { buildRoundGroupAssignment, shouldSplitRound, sideOf, sidesForRound } from '../lib/groups.js'
 import { assignRoundGroups, joinRoundGroup } from '../lib/mutations.js'
-import { formatPacificDate, formatPhaseDateRange, getLeagueContext, getRoundTiming } from '../lib/schedule.js'
-import AppreciationView from './home/AppreciationView.jsx'
-import SubmissionView from './home/SubmissionView.jsx'
-import VotingView from './home/VotingView.jsx'
+import { formatPacificDate, formatPhaseDateRange, getLeagueContext, getRoundTiming, phaseForDate } from '../lib/schedule.js'
+
+const phaseLoaders = {
+  submission: () => import('./home/SubmissionView.jsx'),
+  voting: () => import('./home/VotingView.jsx'),
+  appreciation: () => import('./home/AppreciationView.jsx'),
+}
+const SubmissionView = lazy(phaseLoaders.submission)
+const VotingView = lazy(phaseLoaders.voting)
+const AppreciationView = lazy(phaseLoaders.appreciation)
 
 function getDevDayOffset() {
   if (!import.meta.env.DEV || typeof window === 'undefined') return 0
@@ -43,15 +56,32 @@ export default function HomePage() {
   const { player } = usePlayer()
   const { settings } = useSettings()
   const { now, dayOffset } = useNow()
-  const { data, loading, reload } = useRealtimeData({
-    channelName: 'home-season-2',
-    fetcher: fetchHomeData,
-    initialData: EMPTY_HOME_DATA,
-    tables: HOME_REALTIME_TABLES,
+  const coreFetcher = useCallback(() => fetchHomeCoreData(), [])
+  const { data: coreData, loading: coreLoading, reload: reloadCore } = useRealtimeData({
+    cacheKey: 'home-core',
+    channelName: 'home-core-season-2',
+    fetcher: coreFetcher,
+    initialData: EMPTY_HOME_CORE_DATA,
+    tables: HOME_CORE_REALTIME_TABLES,
   })
-
-  const context = useMemo(() => getLeagueContext(data.rounds, settings, now), [data.rounds, settings, now])
+  const context = useMemo(() => getLeagueContext(coreData.rounds, settings, now), [coreData.rounds, settings, now])
   const currentRound = context.currentRound
+  const roundFetcher = useCallback(() => fetchHomeRoundData(currentRound?.id), [currentRound?.id])
+  const roundRealtimeTables = useMemo(() => homeRoundRealtimeTables(currentRound?.id), [currentRound?.id])
+  const { data: roundActivity, loading: roundLoading, reload } = useRealtimeData({
+    cacheKey: `home-round:${currentRound?.id || 'none'}`,
+    channelName: `home-round-season-2-${currentRound?.id || 'none'}`,
+    fetcher: roundFetcher,
+    initialData: EMPTY_HOME_ROUND_DATA,
+    tables: roundRealtimeTables,
+  })
+  const data = useMemo(() => ({ ...coreData, ...roundActivity }), [coreData, roundActivity])
+  const loading = coreLoading || (Boolean(currentRound) && roundLoading)
+
+  useEffect(() => {
+    phaseLoaders[phaseForDate(settings, now)]?.()
+  }, [settings, now])
+
   const activePlayers = useMemo(() => data.players.filter(p => p.active), [data.players])
 
   const sides = useMemo(
@@ -91,7 +121,7 @@ export default function HomePage() {
         await joinRoundGroup({ roundId, playerId: player.id })
       }
 
-      if (!cancelled) reload()
+      if (!cancelled) reloadCore()
     }
 
     settleSides()
@@ -99,7 +129,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [dayOffset, loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reload])
+  }, [dayOffset, loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reloadCore])
 
   const roundData = useMemo(() => {
     if (!currentRound) return null
@@ -149,7 +179,18 @@ export default function HomePage() {
       otherSideSongs,
       otherSideComments,
     }
-  }, [currentRound, data, sides, mySide, activePlayers])
+  }, [
+    currentRound,
+    data.songs,
+    data.votes,
+    data.comments,
+    data.duplicateGroups,
+    data.groupSongs,
+    data.playlists,
+    sides,
+    mySide,
+    activePlayers,
+  ])
 
   if (loading) {
     return (
@@ -207,7 +248,7 @@ export default function HomePage() {
           <p>This round is already split. Hang tight while you get slotted in.</p>
         </section>
       ) : (
-        <>
+        <Suspense fallback={<p className="muted">Loading this phase...</p>}>
           {context.phase === 'submission' && (
             <SubmissionView
               round={currentRound}
@@ -266,7 +307,7 @@ export default function HomePage() {
               <p>This round is waiting for the next scheduled phase.</p>
             </section>
           )}
-        </>
+        </Suspense>
       )}
     </main>
   )

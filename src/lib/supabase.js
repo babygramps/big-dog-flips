@@ -7,7 +7,14 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
 
 export const supabase = createClient(
   SUPABASE_URL || 'https://example.supabase.co',
-  SUPABASE_ANON_KEY || 'missing-anon-key'
+  SUPABASE_ANON_KEY || 'missing-anon-key',
+  {
+    auth: {
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      persistSession: false,
+    },
+  }
 )
 
 // Season 2 schema changes live in supabase/migrations/.

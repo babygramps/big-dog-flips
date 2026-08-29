@@ -5,7 +5,9 @@ import { commentsForEntry, playerName, searchUrl, serviceLabelForUrl } from './h
 export default function AppreciationSongCard({
   entry,
   comments = [],
+  commentsBySongId = null,
   commentLikes = [],
+  commentLikesIndex = null,
   player,
   roundId,
   onChanged,
@@ -15,7 +17,7 @@ export default function AppreciationSongCard({
   submitterNote = entry.submitter_note,
   showListenLink = true,
 }) {
-  const entryComments = commentsForEntry(comments, entry)
+  const entryComments = commentsForEntry(comments, entry, commentsBySongId)
   const listenUrl = entry.link || searchUrl('youtube', entry)
   const listenLabel = entry.link ? serviceLabelForUrl(entry.link) : 'Find track'
 
@@ -79,6 +81,7 @@ export default function AppreciationSongCard({
         <CommentThread
           comments={entryComments}
           commentLikes={commentLikes}
+          commentLikesIndex={commentLikesIndex}
           player={player}
           revealAuthors
           songId={entry.canonical_song_id}

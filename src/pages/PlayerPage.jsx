@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
@@ -12,14 +12,18 @@ import { uploadProfilePicture } from '../lib/profilePictures.js'
 import { buildFairScores, buildLeaderboard, buildSongEntries, rankEntries } from '../lib/scoring.js'
 import { formatPacificDate, getRoundWeekStart, getScoredRoundIds, sortedRounds } from '../lib/schedule.js'
 import AppreciationSongCard from './home/AppreciationSongCard.jsx'
+import { indexCommentLikes, indexCommentsBySongId } from './home/homeUtils.js'
 
 export default function PlayerPage() {
   const { playerId } = useParams()
   const { player, setPlayer, logout } = usePlayer()
   const { settings } = useSettings()
+  const fetcher = useCallback(() => fetchPlayerProfileData(settings), [settings])
+  const scoringScheduleKey = `${settings?.schedule_start_date || ''}:${JSON.stringify(settings?.weekly_phase_template || {})}`
   const { data, loading, reload } = useRealtimeData({
+    cacheKey: `player-profile:${scoringScheduleKey}`,
     channelName: `player-page-season-2-${playerId}`,
-    fetcher: fetchPlayerProfileData,
+    fetcher,
     initialData: EMPTY_PLAYER_PROFILE_DATA,
     tables: PLAYER_PROFILE_REALTIME_TABLES,
   })
@@ -59,6 +63,8 @@ export default function PlayerPage() {
   }, [isFairScoreModalOpen])
 
   const viewedPlayer = data.players.find(row => row.id === playerId)
+  const commentsBySongId = useMemo(() => indexCommentsBySongId(data.comments), [data.comments])
+  const commentLikesIndex = useMemo(() => indexCommentLikes(data.commentLikes), [data.commentLikes])
   const isSelf = playerId === player.id
   const scoredRoundIds = useMemo(() => getScoredRoundIds(data.rounds, settings), [data.rounds, settings])
   const leaderboard = useMemo(() => buildLeaderboard({
@@ -69,7 +75,7 @@ export default function PlayerPage() {
     duplicateGroups: data.groups,
     groupSongs: data.groupSongs,
     scoredRoundIds,
-  }), [data, scoredRoundIds])
+  }), [data.players, data.rounds, data.songs, data.votes, data.groups, data.groupSongs, scoredRoundIds])
   const latestScoredRoundId = useMemo(() => {
     const scoredRounds = sortedRounds(data.rounds).filter(round => scoredRoundIds.has(round.id))
     return scoredRounds[scoredRounds.length - 1]?.id || null
@@ -82,7 +88,7 @@ export default function PlayerPage() {
     roundGroups: data.roundGroups,
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
-  }), [data, scoredRoundIds, settings?.points_per_player])
+  }), [data.songs, data.votes, data.groups, data.groupSongs, data.roundGroups, scoredRoundIds, settings?.points_per_player])
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
     songs: data.songs,
@@ -95,7 +101,19 @@ export default function PlayerPage() {
     pointsPerPlayer: settings?.points_per_player || 10,
     leaderboard,
     latestScoredRoundId,
-  }), [data, scoredRoundIds, settings?.points_per_player, leaderboard, latestScoredRoundId])
+  }), [
+    data.players,
+    data.songs,
+    data.votes,
+    data.comments,
+    data.groups,
+    data.groupSongs,
+    data.roundGroups,
+    scoredRoundIds,
+    settings?.points_per_player,
+    leaderboard,
+    latestScoredRoundId,
+  ])
 
   const submissions = useMemo(() => {
     if (!viewedPlayer) return []
@@ -142,15 +160,25 @@ export default function PlayerPage() {
             }
           })
       })
-  }, [data, scoredRoundIds, settings, viewedPlayer])
+  }, [
+    data.rounds,
+    data.songs,
+    data.votes,
+    data.groups,
+    data.groupSongs,
+    data.roundGroups,
+    scoredRoundIds,
+    settings,
+    viewedPlayer,
+  ])
 
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
   const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
-  const votesCast = data.votes.reduce((total, vote) => {
+  const votesCast = useMemo(() => data.votes.reduce((total, vote) => {
     if (vote.voter_player_id !== playerId || !scoredRoundIds.has(vote.round_id)) return total
     return total + Math.max(0, Number(vote.points) || 0)
-  }, 0)
+  }, 0), [data.votes, playerId, scoredRoundIds])
   const playerAwards = awardsByPlayerId[playerId] || []
 
   async function saveProfile(event) {
@@ -356,7 +384,7 @@ export default function PlayerPage() {
         <div className="profile-image-lightbox-backdrop" role="presentation" onMouseDown={() => setIsAvatarLightboxOpen(false)}>
           <section className="profile-image-lightbox" role="dialog" aria-modal="true" aria-label={`${displayPlayer.name}'s profile picture`} onMouseDown={event => event.stopPropagation()}>
             <button type="button" className="profile-image-lightbox-close" onClick={() => setIsAvatarLightboxOpen(false)} aria-label="Close enlarged profile picture">×</button>
-            <img src={displayPlayer.avatar_url} alt={`${displayPlayer.name}'s profile picture`} />
+            <img src={displayPlayer.avatar_url} alt={`${displayPlayer.name}'s profile picture`} decoding="async" />
           </section>
         </div>
       )}
@@ -429,7 +457,9 @@ export default function PlayerPage() {
                 key={submission.id}
                 submission={submission}
                 comments={data.comments}
+                commentsBySongId={commentsBySongId}
                 commentLikes={data.commentLikes}
+                commentLikesIndex={commentLikesIndex}
                 player={player}
                 onChanged={reload}
               />
@@ -508,14 +538,16 @@ function formatFairNumber(value) {
   return Number.isInteger(value) ? value : Number(value.toFixed(2))
 }
 
-function PlayerSubmission({ submission, comments, commentLikes, player, onChanged }) {
+function PlayerSubmission({ submission, comments, commentsBySongId, commentLikes, commentLikesIndex, player, onChanged }) {
   const { entry, rank, round, song, weekStart } = submission
 
   return (
     <AppreciationSongCard
       entry={entry}
       comments={comments}
+      commentsBySongId={commentsBySongId}
       commentLikes={commentLikes}
+      commentLikesIndex={commentLikesIndex}
       player={player}
       roundId={round.id}
       onChanged={onChanged}

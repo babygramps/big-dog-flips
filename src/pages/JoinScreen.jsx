@@ -9,7 +9,7 @@ function randomAvatarColor() {
   return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
 }
 
-export default function JoinScreen({ onJoin }) {
+export default function JoinScreen({ onJoin, settings }) {
   const [name, setName] = useState('')
   const [players, setPlayers] = useState([])
   const [leagueName, setLeagueName] = useState('Muzak')
@@ -19,14 +19,14 @@ export default function JoinScreen({ onJoin }) {
 
   useEffect(() => {
     async function load() {
-      const { players: playersData, settings: settingsData } = await fetchJoinData()
+      const { players: playersData, settings: settingsData } = await fetchJoinData(settings)
 
       setPlayers(playersData)
       if (settingsData?.league_name) setLeagueName(settingsData.league_name)
       if (settingsData?.season_label) setSeasonLabel(settingsData.season_label)
     }
     load()
-  }, [])
+  }, [settings])
 
   async function handleSubmit(event) {
     event.preventDefault()

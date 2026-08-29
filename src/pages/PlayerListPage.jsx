@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
@@ -6,15 +6,19 @@ import MedalIcon from '../components/MedalIcon.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_DATA, fetchPlayerData, PLAYER_REALTIME_TABLES } from '../lib/data.js'
 import { buildPlayerAwards } from '../lib/playerAwards.js'
+import { preloadPlayerPage } from '../lib/routeLoaders.js'
 import { buildLeaderboard } from '../lib/scoring.js'
 import { getLeagueContext, getScoredRoundIds } from '../lib/schedule.js'
 
 export default function PlayerListPage() {
   const { player } = usePlayer()
   const { settings } = useSettings()
+  const fetcher = useCallback(() => fetchPlayerData(settings), [settings])
+  const scoringScheduleKey = `${settings?.schedule_start_date || ''}:${JSON.stringify(settings?.weekly_phase_template || {})}`
   const { data, loading } = useRealtimeData({
+    cacheKey: `player-standings:${scoringScheduleKey}`,
     channelName: 'players-season-2',
-    fetcher: fetchPlayerData,
+    fetcher,
     initialData: EMPTY_PLAYER_DATA,
     tables: PLAYER_REALTIME_TABLES,
   })
@@ -30,9 +34,10 @@ export default function PlayerListPage() {
     duplicateGroups: data.groups,
     groupSongs: data.groupSongs,
     scoredRoundIds,
-  }), [data, scoredRoundIds])
-  const leaderboardMap = Object.fromEntries(leaderboard.map(row => [row.id, row]))
-  const rankedPlayers = data.players
+  }), [data.players, data.rounds, data.songs, data.votes, data.groups, data.groupSongs, scoredRoundIds])
+  const rankedPlayers = useMemo(() => {
+    const leaderboardMap = Object.fromEntries(leaderboard.map(row => [row.id, row]))
+    return data.players
     .map(row => {
       const score = leaderboardMap[row.id]
       return {
@@ -41,6 +46,7 @@ export default function PlayerListPage() {
       }
     })
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
+  }, [data.players, leaderboard])
   const latestScoredRound = scoredRounds[scoredRounds.length - 1]
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
@@ -54,7 +60,19 @@ export default function PlayerListPage() {
     pointsPerPlayer: settings?.points_per_player || 10,
     leaderboard,
     latestScoredRoundId: latestScoredRound?.id || null,
-  }), [data, scoredRoundIds, settings?.points_per_player, leaderboard, latestScoredRound?.id])
+  }), [
+    data.players,
+    data.songs,
+    data.votes,
+    data.comments,
+    data.groups,
+    data.groupSongs,
+    data.roundGroups,
+    scoredRoundIds,
+    settings?.points_per_player,
+    leaderboard,
+    latestScoredRound?.id,
+  ])
   if (loading) {
     return (
       <main className="page">
@@ -91,6 +109,8 @@ export default function PlayerListPage() {
                   className={`leader-row player-standings-row player-row-link ${isFirstPlace ? 'is-first-place' : ''} ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
                   to={`/players/${row.id}`}
                   key={row.id}
+                  onFocus={preloadPlayerPage}
+                  onPointerEnter={preloadPlayerPage}
                 >
                   {isFirstPlace && <FirstPlaceParty />}
                   <span className="rank">{index + 1}</span>

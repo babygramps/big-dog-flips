@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { usePlayer, useSettings } from '../App.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
-import { ADMIN_REALTIME_TABLES, EMPTY_ADMIN_DATA, fetchAdminData } from '../lib/data.js'
+import {
+  ADMIN_REALTIME_TABLES,
+  ADMIN_SUMMARY_REALTIME_TABLES,
+  EMPTY_ADMIN_DATA,
+  fetchAdminData,
+  fetchAdminSummaryData,
+} from '../lib/data.js'
 import { saveLeagueSettings } from '../lib/mutations.js'
 import {
   DEFAULT_WEEKLY_TEMPLATE,
@@ -16,11 +22,13 @@ import ScheduleEditor from './admin/ScheduleEditor.jsx'
 export default function AdminPage() {
   const { player } = usePlayer()
   const { settings, setSettings } = useSettings()
+  const summaryFetcher = useCallback(() => fetchAdminSummaryData(), [])
   const { data, loading, reload } = useRealtimeData({
-    channelName: 'admin-season-2',
-    fetcher: fetchAdminData,
+    cacheKey: 'admin-summary',
+    channelName: 'admin-summary-season-2',
+    fetcher: summaryFetcher,
     initialData: EMPTY_ADMIN_DATA,
-    tables: ADMIN_REALTIME_TABLES,
+    tables: ADMIN_SUMMARY_REALTIME_TABLES,
   })
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [form, setForm] = useState({
@@ -84,7 +92,7 @@ export default function AdminPage() {
         <AdminUnlock onUnlock={() => setAdminUnlocked(true)} />
       ) : (
         <>
-          <DuplicateMergeTool settings={settings} data={data} onChanged={reload} />
+          <DuplicateMergeSection settings={settings} />
 
           <section className="card admin-settings">
             <div className="section-heading">
@@ -139,4 +147,26 @@ export default function AdminPage() {
       )}
     </main>
   )
+}
+
+function DuplicateMergeSection({ settings }) {
+  const fetcher = useCallback(() => fetchAdminData(settings), [settings])
+  const scoringScheduleKey = `${settings?.schedule_start_date || ''}:${JSON.stringify(settings?.weekly_phase_template || {})}`
+  const { data, loading, reload } = useRealtimeData({
+    cacheKey: `admin-merges:${scoringScheduleKey}`,
+    channelName: 'admin-merges-season-2',
+    fetcher,
+    initialData: EMPTY_ADMIN_DATA,
+    tables: ADMIN_REALTIME_TABLES,
+  })
+
+  if (loading) {
+    return (
+      <section className="card duplicate-tool">
+        <p className="muted">Loading duplicate tools...</p>
+      </section>
+    )
+  }
+
+  return <DuplicateMergeTool settings={settings} data={data} onChanged={reload} />
 }

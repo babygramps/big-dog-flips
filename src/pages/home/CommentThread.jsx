@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import { deleteComment as removeComment, postComment as saveComment, toggleCommentLike } from '../../lib/mutations.js'
+import { indexCommentLikes } from './homeUtils.js'
 
 const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY
 
-export default function CommentThread({ comments, commentLikes = [], player, revealAuthors, anonymousLabelFor, songId, roundId, onChanged, compact = false }) {
+export default function CommentThread({ comments, commentLikes = [], commentLikesIndex = null, player, revealAuthors, anonymousLabelFor, songId, roundId, onChanged, compact = false }) {
   const [body, setBody] = useState('')
   const [gif, setGif] = useState(null)
   const [gifPickerOpen, setGifPickerOpen] = useState(false)
@@ -12,12 +13,10 @@ export default function CommentThread({ comments, commentLikes = [], player, rev
   const [likingCommentId, setLikingCommentId] = useState(null)
   const [deletingCommentId, setDeletingCommentId] = useState(null)
   const [error, setError] = useState('')
-  const likesByCommentId = useMemo(() => commentLikes.reduce((result, like) => {
-    const likes = result.get(like.comment_id) || []
-    likes.push(like)
-    result.set(like.comment_id, likes)
-    return result
-  }, new Map()), [commentLikes])
+  const likesByCommentId = useMemo(
+    () => commentLikesIndex || indexCommentLikes(commentLikes),
+    [commentLikes, commentLikesIndex]
+  )
 
   async function postComment(event) {
     event?.preventDefault()
@@ -106,6 +105,7 @@ export default function CommentThread({ comments, commentLikes = [], player, rev
                       className="comment-gif"
                       src={comment.gif_preview_url || comment.gif_url}
                       alt={comment.body ? `GIF attached to comment: ${comment.body}` : 'GIF comment'}
+                      decoding="async"
                       loading="lazy"
                     />
                   )}
@@ -159,7 +159,7 @@ export default function CommentThread({ comments, commentLikes = [], player, rev
       </form>
       {gif && (
         <div className="selected-gif">
-          <img src={gif.previewUrl || gif.url} alt="Selected GIF" />
+          <img src={gif.previewUrl || gif.url} alt="Selected GIF" decoding="async" />
           <button type="button" className="icon-btn" onClick={() => setGif(null)} aria-label="Remove selected GIF">×</button>
         </div>
       )}
@@ -208,7 +208,7 @@ function GifPicker({ onSelect, onError, compact }) {
             <button type="submit" className="btn btn-secondary btn-sm" disabled={searching || !query.trim()}>{searching ? 'Searching…' : 'Search'}</button>
           </form>
           {results.length > 0 && <div className="gif-results">
-            {results.map(result => <button type="button" key={result.id} onClick={() => onSelect(result)} title={result.alt} aria-label={`Choose GIF: ${result.alt}`}><img src={result.previewUrl} alt="" loading="lazy" /></button>)}
+            {results.map(result => <button type="button" key={result.id} onClick={() => onSelect(result)} title={result.alt} aria-label={`Choose GIF: ${result.alt}`}><img src={result.previewUrl} alt="" loading="lazy" decoding="async" /></button>)}
           </div>}
           <p className="gif-credit">Powered by GIPHY</p>
         </>

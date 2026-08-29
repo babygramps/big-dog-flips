@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { preloadRoute } from '../lib/routeLoaders.js'
 
 const ITEMS = [
   { path: '/', Icon: HomeIcon, label: 'Home', tone: 'home' },
@@ -19,6 +20,8 @@ export default function Nav() {
           key={item.path}
           className={`nav-item nav-${item.tone} ${location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(`${item.path}/`)) ? 'active' : ''}`}
           onClick={() => navigate(item.path)}
+          onFocus={() => preloadRoute(item.path)}
+          onPointerEnter={() => preloadRoute(item.path)}
         >
           <span className="nav-icon" aria-hidden="true">
             <item.Icon />

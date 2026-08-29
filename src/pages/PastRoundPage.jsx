@@ -1,8 +1,9 @@
+import { useCallback, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
-import { EMPTY_HOME_DATA, fetchHomeData, HOME_REALTIME_TABLES } from '../lib/data.js'
+import { EMPTY_HOME_DATA, fetchPastRoundData, pastRoundRealtimeTables } from '../lib/data.js'
 import { sidesForRound } from '../lib/groups.js'
 import { formatPacificDate, getRoundState, getRoundTiming, pacificDateTimeToUtc, sortedRounds } from '../lib/schedule.js'
 import AppreciationView from './home/AppreciationView.jsx'
@@ -11,11 +12,14 @@ export default function PastRoundPage() {
   const { roundId } = useParams()
   const { player } = usePlayer()
   const { settings } = useSettings()
+  const fetcher = useCallback(() => fetchPastRoundData(roundId), [roundId])
+  const realtimeTables = useMemo(() => pastRoundRealtimeTables(roundId), [roundId])
   const { data, loading, reload } = useRealtimeData({
+    cacheKey: `past-round:${roundId}`,
     channelName: `past-round-${roundId}`,
-    fetcher: fetchHomeData,
+    fetcher,
     initialData: EMPTY_HOME_DATA,
-    tables: HOME_REALTIME_TABLES,
+    tables: realtimeTables,
   })
 
   if (loading) {

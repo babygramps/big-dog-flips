@@ -3740,3 +3740,19 @@ select:focus {
     font-size: 1.5rem;
   }
 }
+
+/* Skip layout and paint work for long archive, standings, and song lists below the viewport. */
+.history-round {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 190px;
+}
+
+.player-standings-list > .player-standings-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 82px;
+}
+
+.song-stack > .song-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 460px;
+}

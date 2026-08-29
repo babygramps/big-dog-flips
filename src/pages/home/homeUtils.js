@@ -16,8 +16,30 @@ export function playerName(player) {
   return player?.name || 'Unknown player'
 }
 
-export function commentsForEntry(comments, entry) {
+export function indexCommentsBySongId(comments = []) {
+  return comments.reduce((result, comment) => {
+    if (!comment.song_id) return result
+    const songComments = result.get(comment.song_id) || []
+    songComments.push(comment)
+    result.set(comment.song_id, songComments)
+    return result
+  }, new Map())
+}
+
+export function indexCommentLikes(commentLikes = []) {
+  return commentLikes.reduce((result, like) => {
+    const likes = result.get(like.comment_id) || []
+    likes.push(like)
+    result.set(like.comment_id, likes)
+    return result
+  }, new Map())
+}
+
+export function commentsForEntry(comments, entry, commentsBySongId = null) {
   const ids = new Set(entry.member_song_ids || [entry.canonical_song_id])
+  if (commentsBySongId) {
+    return [...ids].flatMap(songId => commentsBySongId.get(songId) || [])
+  }
   return comments.filter(comment => ids.has(comment.song_id))
 }
 

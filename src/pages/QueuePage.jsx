@@ -5,12 +5,14 @@ import Avatar from '../components/Avatar.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_ROUNDS_DATA, fetchRoundsData, ROUNDS_REALTIME_TABLES } from '../lib/data.js'
 import { addRound, deleteRound, moveUpcomingRound, updateRoundTheme } from '../lib/mutations.js'
+import { preloadPastRoundPage } from '../lib/routeLoaders.js'
 import { formatPacificDate, getLeagueContext, getRoundState, getRoundTiming, PHASES } from '../lib/schedule.js'
 
 export default function RoundsPage() {
   const { player } = usePlayer()
   const { settings } = useSettings()
   const { data, loading, reload } = useRealtimeData({
+    cacheKey: 'rounds',
     channelName: 'rounds-season-2',
     fetcher: fetchRoundsData,
     initialData: EMPTY_ROUNDS_DATA,
@@ -26,15 +28,23 @@ export default function RoundsPage() {
   const [editError, setEditError] = useState('')
 
   const context = useMemo(() => getLeagueContext(data.rounds, settings), [data.rounds, settings])
-  const roundRows = context.orderedRounds.map((round, index) => ({
-    round,
-    index,
-    state: getRoundState(round, index, settings),
-    timing: getRoundTiming(round, index, settings),
-  }))
-  const current = roundRows.filter(row => row.state === 'current')
-  const upcoming = roundRows.filter(row => row.state === 'upcoming')
-  const past = roundRows.filter(row => row.state === 'past').reverse()
+  const { current, upcoming, past } = useMemo(() => {
+    const roundRows = context.orderedRounds.map((round, index) => ({
+      round,
+      index,
+      state: getRoundState(round, index, settings),
+      timing: getRoundTiming(round, index, settings),
+    }))
+    return {
+      current: roundRows.filter(row => row.state === 'current'),
+      upcoming: roundRows.filter(row => row.state === 'upcoming'),
+      past: roundRows.filter(row => row.state === 'past').reverse(),
+    }
+  }, [context.orderedRounds, settings])
+  const songCountByRoundId = useMemo(() => data.songs.reduce((counts, song) => {
+    counts[song.round_id] = (counts[song.round_id] || 0) + 1
+    return counts
+  }, {}), [data.songs])
 
   async function handleAdd(event) {
     event.preventDefault()
@@ -225,7 +235,7 @@ export default function RoundsPage() {
           <HistoryRound
             key={row.round.id}
             row={row}
-            songs={data.songs.filter(song => song.round_id === row.round.id)}
+            songCount={songCountByRoundId[row.round.id] || 0}
           />
         ))}
       </RoundSection>
@@ -312,9 +322,14 @@ function RoundCard({ row, currentPhase, controls, manage }) {
   )
 }
 
-function HistoryRound({ row, songs }) {
+function HistoryRound({ row, songCount }) {
   return (
-    <Link className="round-card history-round history-round-link past" to={`/rounds/${row.round.id}`}>
+    <Link
+      className="round-card history-round history-round-link past"
+      to={`/rounds/${row.round.id}`}
+      onFocus={preloadPastRoundPage}
+      onPointerEnter={preloadPastRoundPage}
+    >
       <div className="round-card-main">
         <div className="round-card-topline">
           <span className="phase-pill phase-appreciation">Past round</span>
@@ -329,7 +344,7 @@ function HistoryRound({ row, songs }) {
               Added by {row.round.players.name}
             </span>
           )}
-          <span className="soft-tag">{songs.length} song{songs.length === 1 ? '' : 's'}</span>
+          <span className="soft-tag">{songCount} song{songCount === 1 ? '' : 's'}</span>
         </div>
       </div>
     </Link>
