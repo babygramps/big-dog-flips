@@ -720,7 +720,7 @@ select:focus {
 
 .mini-roster {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.6rem;
   margin-top: 0.8rem;
 }
 
@@ -1322,7 +1322,7 @@ select:focus {
 }
 
 .voting-side-roster .mini-roster {
-  gap: 0.25rem;
+  gap: 0.5rem;
   margin-top: 0.35rem;
 }
 
