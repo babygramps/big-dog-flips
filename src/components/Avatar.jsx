@@ -24,7 +24,7 @@ export default function Avatar({ player, size = 'md', label, linkToProfile = tru
   const avatar = (
     <span className={`avatar avatar-${size}`} style={style} aria-label={canLinkToProfile ? undefined : name}>
       <img
-        src={player?.avatar_url || '/default-avatar-v2.webp'}
+        src={player?.avatar_url || '/default-avatar-v3.webp'}
         alt=""
         decoding="async"
         loading={size === 'hero' ? 'eager' : 'lazy'}
