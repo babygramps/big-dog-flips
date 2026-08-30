@@ -2059,6 +2059,12 @@ select:focus {
   font-weight: 700;
 }
 
+.leader-name .player-top-song {
+  margin-top: 0.16rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .player-badges {
   display: flex;
   flex-wrap: wrap;
@@ -2107,16 +2113,53 @@ select:focus {
   color: #136343;
 }
 
-.player-badges .badge-novelist {
-  border-color: var(--grape);
-  background: var(--grape-soft);
-  color: #5134a8;
+.player-badges .badge-best-song {
+  border-color: #ca6048;
+  background: linear-gradient(135deg, #fff0d4, #ffe4ee);
+  color: #8a3e32;
+  box-shadow: 2px 2px 0 rgba(202, 96, 72, 0.14);
 }
 
+.player-badges .badge-season-one-winner {
+  border-color: #7651d1;
+  background: linear-gradient(135deg, #eee8ff, #fff3b4);
+  color: #4c318f;
+  box-shadow: 2px 2px 0 rgba(169, 111, 11, 0.16);
+}
+
+.player-badges .badge-incognito,
+.player-badges .badge-deep-in-thought,
 .player-badges .badge-lurker {
   border-color: var(--quiet);
   background: #f3edf5;
   color: #5f5266;
+}
+
+.player-badges .badge-highs-and-lows {
+  border-color: #596ab8;
+  background: linear-gradient(135deg, #e9edff, #ffe8f1);
+  color: #394784;
+  box-shadow: 2px 2px 0 rgba(216, 82, 143, 0.14);
+}
+
+.player-badges .badge-consistency-queen {
+  border-color: #388478;
+  background: linear-gradient(135deg, #e0f5ef, #f2f0c9);
+  color: #285f58;
+  box-shadow: 2px 2px 0 rgba(56, 132, 120, 0.14);
+}
+
+.player-badges .badge-underground {
+  border-color: #667449;
+  background: linear-gradient(135deg, #e8f0d8, #f2e3d2);
+  color: #475332;
+  box-shadow: 2px 2px 0 rgba(121, 86, 51, 0.14);
+}
+
+.player-badges .badge-novelist {
+  border-color: var(--grape);
+  background: var(--grape-soft);
+  color: #5134a8;
 }
 
 .player-badges .badge-minimalist {
@@ -2712,10 +2755,42 @@ select:focus {
   --medal-pop: #79d6af;
 }
 
+.player-medal.badge-best-song {
+  --medal-color: #ca6048;
+  --medal-soft: #fff0d4;
+  --medal-pop: #f49ac0;
+}
+
+.player-medal.badge-season-one-winner {
+  --medal-color: #7651d1;
+  --medal-soft: #eee8ff;
+  --medal-pop: #ffe66d;
+}
+
+.player-medal.badge-incognito,
+.player-medal.badge-deep-in-thought,
 .player-medal.badge-lurker {
   --medal-color: var(--quiet);
   --medal-soft: #f3edf5;
   --medal-pop: #cbbfd0;
+}
+
+.player-medal.badge-highs-and-lows {
+  --medal-color: #596ab8;
+  --medal-soft: #e9edff;
+  --medal-pop: #f49dc4;
+}
+
+.player-medal.badge-consistency-queen {
+  --medal-color: #388478;
+  --medal-soft: #e0f5ef;
+  --medal-pop: #d9da72;
+}
+
+.player-medal.badge-underground {
+  --medal-color: #667449;
+  --medal-soft: #e8f0d8;
+  --medal-pop: #c69162;
 }
 
 .player-medal.badge-minimalist {

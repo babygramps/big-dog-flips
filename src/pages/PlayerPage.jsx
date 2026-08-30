@@ -91,6 +91,7 @@ export default function PlayerPage() {
   }), [data.songs, data.votes, data.groups, data.groupSongs, data.roundGroups, scoredRoundIds, settings?.points_per_player])
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
+    rounds: data.rounds,
     songs: data.songs,
     votes: data.votes,
     comments: data.comments,
@@ -100,9 +101,11 @@ export default function PlayerPage() {
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
     leaderboard,
+    fairScores,
     latestScoredRoundId,
   }), [
     data.players,
+    data.rounds,
     data.songs,
     data.votes,
     data.comments,
@@ -112,6 +115,7 @@ export default function PlayerPage() {
     scoredRoundIds,
     settings?.points_per_player,
     leaderboard,
+    fairScores,
     latestScoredRoundId,
   ])
 

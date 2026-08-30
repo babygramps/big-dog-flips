@@ -95,6 +95,60 @@ function IconPaths({ name }) {
           <path d="M7 11h18M11 6l5 5 5-5M12 11l4 15 4-15" />
         </>
       )
+    case 'waveform':
+      return (
+        <>
+          <path d="M4 16h4l3.2-8 5 16 4-12 3 8H28" />
+          <circle cx="4" cy="16" r="1.4" fill="currentColor" stroke="none" />
+          <circle cx="28" cy="20" r="1.4" fill="currentColor" stroke="none" />
+        </>
+      )
+    case 'metronome':
+      return (
+        <>
+          <path d="m11 6-5 20h20L21 6Z" />
+          <path d="M16 7v15M12 22h8" />
+          <path d="m16 14 6-5" />
+          <circle cx="22" cy="9" r="1.5" fill="currentColor" stroke="none" />
+        </>
+      )
+    case 'incognito':
+      return (
+        <>
+          <path d="m8 13 3-7h10l3 7M5 13h22" />
+          <path d="M7.5 17h6l1.5 3h2l1.5-3h6" />
+          <circle cx="10.5" cy="19" r="3" />
+          <circle cx="21.5" cy="19" r="3" />
+          <path d="M12 25c1.1 1 2.4 1.5 4 1.5s2.9-.5 4-1.5" />
+        </>
+      )
+    case 'underground':
+      return (
+        <>
+          <path d="M4 10h24M7 10l2-3M23 10l2-3" />
+          <path d="M18 14v8.5a3.5 3.5 0 1 1-2-3.2V16l8-2v5l-6 1.5" />
+        </>
+      )
+    case 'thought':
+      return (
+        <>
+          <path d="M9.5 19.5h12.8a4.2 4.2 0 0 0 1.1-8.2A7.6 7.6 0 0 0 9 9.7a5 5 0 0 0 .5 9.8Z" />
+          <circle cx="11" cy="14" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="16" cy="14" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="21" cy="14" r="1.2" fill="currentColor" stroke="none" />
+          <circle cx="8" cy="23" r="1.5" />
+          <circle cx="5.5" cy="27" r="1" fill="currentColor" stroke="none" />
+        </>
+      )
+    case 'record-star':
+      return (
+        <>
+          <circle cx="16" cy="16" r="11" />
+          <circle cx="16" cy="16" r="3" />
+          <path d="M7.5 13c2.2-3 5.1-4.7 8.5-4.7M24.5 19c-2.2 3-5.1 4.7-8.5 4.7" />
+          <path d="m23 5.5 1.1 2.2 2.4.4-1.8 1.7.4 2.4-2.1-1.1-2.1 1.1.4-2.4-1.8-1.7 2.4-.4Z" fill="currentColor" stroke="none" />
+        </>
+      )
     default:
       return <path d="m16 5 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2L9.8 24l1.2-6.8-5-4.9 6.9-1Z" />
   }

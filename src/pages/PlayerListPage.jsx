@@ -7,7 +7,7 @@ import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_DATA, fetchPlayerData, PLAYER_REALTIME_TABLES } from '../lib/data.js'
 import { buildPlayerAwards } from '../lib/playerAwards.js'
 import { preloadPlayerPage } from '../lib/routeLoaders.js'
-import { buildLeaderboard } from '../lib/scoring.js'
+import { buildFairScores, buildLeaderboard, buildTopSongsByPlayer } from '../lib/scoring.js'
 import { getLeagueContext, getScoredRoundIds } from '../lib/schedule.js'
 
 export default function PlayerListPage() {
@@ -35,6 +35,15 @@ export default function PlayerListPage() {
     groupSongs: data.groupSongs,
     scoredRoundIds,
   }), [data.players, data.rounds, data.songs, data.votes, data.groups, data.groupSongs, scoredRoundIds])
+  const fairScores = useMemo(() => buildFairScores({
+    songs: data.songs,
+    votes: data.votes,
+    duplicateGroups: data.groups,
+    groupSongs: data.groupSongs,
+    roundGroups: data.roundGroups,
+    scoredRoundIds,
+    pointsPerPlayer: settings?.points_per_player || 10,
+  }), [data.songs, data.votes, data.groups, data.groupSongs, data.roundGroups, scoredRoundIds, settings?.points_per_player])
   const rankedPlayers = useMemo(() => {
     const leaderboardMap = Object.fromEntries(leaderboard.map(row => [row.id, row]))
     return data.players
@@ -43,13 +52,22 @@ export default function PlayerListPage() {
       return {
         ...row,
         total: score?.total || 0,
+        fairScore: fairScores[row.id]?.total || 0,
       }
     })
-    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
-  }, [data.players, leaderboard])
+    .sort((a, b) => b.total - a.total || b.fairScore - a.fairScore || a.name.localeCompare(b.name))
+  }, [data.players, leaderboard, fairScores])
+  const topSongsByPlayerId = useMemo(() => buildTopSongsByPlayer({
+    songs: data.songs,
+    votes: data.votes,
+    duplicateGroups: data.groups,
+    groupSongs: data.groupSongs,
+    scoredRoundIds,
+  }), [data.songs, data.votes, data.groups, data.groupSongs, scoredRoundIds])
   const latestScoredRound = scoredRounds[scoredRounds.length - 1]
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
+    rounds: data.rounds,
     songs: data.songs,
     votes: data.votes,
     comments: data.comments,
@@ -59,9 +77,11 @@ export default function PlayerListPage() {
     scoredRoundIds,
     pointsPerPlayer: settings?.points_per_player || 10,
     leaderboard,
+    fairScores,
     latestScoredRoundId: latestScoredRound?.id || null,
   }), [
     data.players,
+    data.rounds,
     data.songs,
     data.votes,
     data.comments,
@@ -71,6 +91,7 @@ export default function PlayerListPage() {
     scoredRoundIds,
     settings?.points_per_player,
     leaderboard,
+    fairScores,
     latestScoredRound?.id,
   ])
   if (loading) {
@@ -98,6 +119,7 @@ export default function PlayerListPage() {
           <div className="card leaderboard-list player-standings-list">
             {rankedPlayers.map((row, index) => {
               const isFirstPlace = index === 0 && row.total > 0
+              const topSong = topSongsByPlayerId[row.id]
 
               return (
                 <Link
@@ -111,6 +133,7 @@ export default function PlayerListPage() {
                   <Avatar player={row} linkToProfile={false} />
                   <span className="leader-name">
                     {row.name}{row.id === player.id ? ' (you)' : ''}
+                    {topSong && <small className="player-top-song">Top song: {topSong.title} · {topSong.artist}</small>}
                     <span className="player-badges">
                       {(awardsByPlayerId[row.id] || []).map(award => (
                         <em className={award.className} title={award.title} key={award.key}>

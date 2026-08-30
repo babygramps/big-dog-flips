@@ -234,6 +234,77 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
     }))
 }
 
+export function buildTopSongsByPlayer({ songs = [], votes = [], duplicateGroups = [], groupSongs = [], scoredRoundIds = new Set() }) {
+  const topSongs = {}
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs })
+
+  for (const roundId of scoredRoundIds || []) {
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs } = scoringRowsForRound(roundIndex, roundId)
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      votes: roundVotes,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+    })
+
+    for (const entry of entries) {
+      for (const playerId of entry.submitterIds || []) {
+        const current = topSongs[playerId]
+        const entryLabel = `${entry.artist}\u0000${entry.title}`
+        const currentLabel = current ? `${current.artist}\u0000${current.title}` : ''
+        if (
+          !current
+          || entry.totalPoints > current.totalPoints
+          || (entry.totalPoints === current.totalPoints && entryLabel.localeCompare(currentLabel) < 0)
+        ) {
+          topSongs[playerId] = {
+            title: entry.title,
+            artist: entry.artist,
+            totalPoints: entry.totalPoints,
+          }
+        }
+      }
+    }
+  }
+
+  return topSongs
+}
+
+export function buildSubmissionRangesByPlayer({ songs = [], votes = [], duplicateGroups = [], groupSongs = [], scoredRoundIds = new Set() }) {
+  const scoresByPlayerId = {}
+  const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs })
+
+  for (const roundId of scoredRoundIds || []) {
+    const { roundSongs, roundVotes, roundDuplicateGroups, roundGroupSongs } = scoringRowsForRound(roundIndex, roundId)
+    const entries = buildSongEntries({
+      songs: roundSongs,
+      votes: roundVotes,
+      duplicateGroups: roundDuplicateGroups,
+      groupSongs: roundGroupSongs,
+    })
+
+    for (const entry of entries) {
+      for (const playerId of entry.submitterIds || []) {
+        if (!scoresByPlayerId[playerId]) scoresByPlayerId[playerId] = []
+        scoresByPlayerId[playerId].push(entry.totalPoints)
+      }
+    }
+  }
+
+  return Object.fromEntries(Object.entries(scoresByPlayerId)
+    .filter(([, scores]) => scores.length >= 2)
+    .map(([playerId, scores]) => {
+      const lowest = Math.min(...scores)
+      const highest = Math.max(...scores)
+      return [playerId, {
+        lowest,
+        highest,
+        range: highest - lowest,
+        submissions: scores.length,
+      }]
+    }))
+}
+
 function fairPointsForPool({ poolEntries, poolVotes, entryBySongId, budget, excludedVoterId = null }) {
   // Submitters who skip voting still contribute a neutral ballot. People who did not
   // submit only enter the pool when they cast at least one point.
