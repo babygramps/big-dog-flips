@@ -23,7 +23,7 @@ const PLAYLIST_FIELDS = 'id, round_id, group_index, service, url, created_at'
 export const HOME_CORE_REALTIME_TABLES = ['rounds', 'players', 'round_groups']
 export const HOME_ROUND_REALTIME_TABLES = ['songs', 'votes', 'comments', 'comment_likes', 'duplicate_groups', 'duplicate_group_songs', 'players', 'round_playlists']
 export const HOME_REALTIME_TABLES = [...new Set([...HOME_CORE_REALTIME_TABLES, ...HOME_ROUND_REALTIME_TABLES])]
-export const ROUNDS_REALTIME_TABLES = ['rounds', 'songs']
+export const ROUNDS_REALTIME_TABLES = ['rounds', 'songs', 'players']
 export const PLAYER_REALTIME_TABLES = ['players', 'rounds', 'songs', 'votes', 'comments', 'duplicate_groups', 'duplicate_group_songs', 'round_groups']
 export const PLAYER_PROFILE_REALTIME_TABLES = [...PLAYER_REALTIME_TABLES, 'comment_likes']
 export const ADMIN_REALTIME_TABLES = ['rounds', 'songs', 'votes', 'duplicate_groups', 'duplicate_group_songs', 'players', 'round_groups']
@@ -91,6 +91,7 @@ export const EMPTY_HOME_ROUND_DATA = {
 }
 
 export const EMPTY_ROUNDS_DATA = {
+  players: [],
   rounds: [],
   songs: [],
 }
@@ -287,12 +288,14 @@ export async function fetchPastRoundData(roundId) {
 }
 
 export async function fetchRoundsData() {
-  const [{ data: rounds }, { data: songs }] = await Promise.all([
+  const [{ data: players }, { data: rounds }, { data: songs }] = await Promise.all([
+    supabase.from('players').select(PLAYER_FIELDS).order('name'),
     supabase.from('rounds').select(ROUND_WITH_PLAYER).order('queue_position'),
     supabase.from('songs').select('id, round_id'),
   ])
 
   return {
+    players: players || [],
     rounds: rounds || [],
     songs: songs || [],
   }

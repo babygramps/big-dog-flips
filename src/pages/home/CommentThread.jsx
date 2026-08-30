@@ -148,7 +148,7 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
         <input
           value={body}
           onChange={event => setBody(event.target.value)}
-          placeholder={revealAuthors ? 'Add appreciation...' : 'Leave an anonymous comment...'}
+          placeholder={revealAuthors ? 'Add comment...' : 'Leave an anonymous comment...'}
         />
         <button type="button" className="btn btn-secondary btn-sm gif-toggle" onClick={() => setGifPickerOpen(open => !open)} aria-expanded={gifPickerOpen}>
           GIF

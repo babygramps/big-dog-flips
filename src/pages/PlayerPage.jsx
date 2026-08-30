@@ -175,10 +175,12 @@ export default function PlayerPage() {
   const score = leaderboard.find(row => row.id === playerId)?.total || 0
   const fairScore = fairScores[playerId]?.total || 0
   const submissionCount = submissions.length
+  const possibleRoundCount = scoredRoundIds.size
   const votesCast = useMemo(() => data.votes.reduce((total, vote) => {
     if (vote.voter_player_id !== playerId || !scoredRoundIds.has(vote.round_id)) return total
     return total + Math.max(0, Number(vote.points) || 0)
   }, 0), [data.votes, playerId, scoredRoundIds])
+  const roundsVotedIn = Math.round((votesCast / 3) * 10) / 10
   const playerAwards = awardsByPlayerId[playerId] || []
 
   async function saveProfile(event) {
@@ -346,12 +348,12 @@ export default function PlayerPage() {
             <small>Fair score <span aria-hidden="true">?</span></small>
           </button>
           <span className="player-profile-stat">
-            <strong>{submissionCount}</strong>
+            <strong>{submissionCount} / {possibleRoundCount}</strong>
             <small>submissions</small>
           </span>
           <span className="player-profile-stat">
-            <strong>{votesCast}</strong>
-            <small>votes cast</small>
+            <strong>{roundsVotedIn} / {possibleRoundCount}</strong>
+            <small>rounds voted in</small>
           </span>
         </div>
       </section>
@@ -539,7 +541,7 @@ function formatFairNumber(value) {
 }
 
 function PlayerSubmission({ submission, comments, commentsBySongId, commentLikes, commentLikesIndex, player, onChanged }) {
-  const { entry, rank, round, song, weekStart } = submission
+  const { entry, round, song, weekStart } = submission
 
   return (
     <AppreciationSongCard
@@ -551,10 +553,8 @@ function PlayerSubmission({ submission, comments, commentsBySongId, commentLikes
       player={player}
       roundId={round.id}
       onChanged={onChanged}
-      isTopEntry={rank === 1 && entry.totalPoints > 0}
       className="player-submission-card"
       submitterNote={song?.submitter_note ?? entry.submitter_note}
-      showListenLink={false}
       context={(
         <>
           <div>

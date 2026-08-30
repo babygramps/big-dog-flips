@@ -3,8 +3,7 @@ import { groupLabel } from '../../lib/groups.js'
 import { addRoundPlaylist, deleteRoundPlaylist } from '../../lib/mutations.js'
 import { serviceLabelForUrl } from './homeUtils.js'
 
-// Voting passes a side and can curate its playlist. Appreciation passes the already-filtered links
-// without a side, so the same panel becomes a read-only list for the side being revealed.
+// Voting and appreciation pass the active side so its shared playlist can be curated in either phase.
 export default function PlaylistPanel({ playlists, roundId, side = null, showSides = false, onChanged }) {
   const canEdit = side === 0 || side === 1
   const [isEditing, setIsEditing] = useState(false)

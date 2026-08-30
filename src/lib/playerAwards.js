@@ -27,7 +27,14 @@ const AWARDS = {
     label: 'Lurker',
     className: 'badge-lurker',
     icon: 'eye',
-    title: 'Has submitted a song but has not written a song description or a comment in a scored round.',
+    title: 'Has submitted a song but has never written a comment in a scored round.',
+  },
+  minimalist: {
+    key: 'minimalist',
+    label: 'Minimalist',
+    className: 'badge-minimalist',
+    icon: 'no-quill',
+    title: 'Has submitted a song but has never written a submission description in a scored round.',
   },
   communityPillar: {
     key: 'community-pillar',
@@ -36,10 +43,10 @@ const AWARDS = {
     icon: 'pillar',
     title: 'Has written the most comments across scored rounds.',
   },
-  conversationStarter: {
-    key: 'conversation-starter',
-    label: 'Conversation Starter',
-    className: 'badge-conversation-starter',
+  provocative: {
+    key: 'provocative',
+    label: 'Provocative',
+    className: 'badge-provocative',
     icon: 'chat',
     title: 'Draws comments from the widest mix of players across their submissions.',
   },
@@ -188,10 +195,15 @@ export function buildPlayerAwards({
     if (!scoredRoundIds.has(comment.round_id) || !comment.player_id) continue
     commentCounts[comment.player_id] = (commentCounts[comment.player_id] || 0) + 1
   }
-  const lurkers = Object.values(descriptionStats)
-    .filter(row => row.submissions > 0 && row.words === 0 && !commentCounts[row.id])
+  const submitters = Object.values(descriptionStats).filter(row => row.submissions > 0)
+  const lurkers = submitters
+    .filter(row => !commentCounts[row.id])
     .map(row => row.id)
   addAward(awardsByPlayerId, lurkers, AWARDS.lurker)
+  const minimalists = submitters
+    .filter(row => row.words === 0)
+    .map(row => row.id)
+  addAward(awardsByPlayerId, minimalists, AWARDS.minimalist)
 
   const commenters = Object.entries(commentCounts).map(([id, count]) => ({ id, count }))
   addAward(awardsByPlayerId, idsAtExtreme(commenters, row => row.count), AWARDS.communityPillar)
@@ -223,10 +235,10 @@ export function buildPlayerAwards({
       }
     }
   }
-  const conversationStarters = Object.entries(commenterIdsBySubmitter)
+  const provocativePlayers = Object.entries(commenterIdsBySubmitter)
     .map(([id, commenterIds]) => ({ id, commenterCount: commenterIds.size }))
     .filter(row => row.commenterCount > 0)
-  addAward(awardsByPlayerId, idsAtExtreme(conversationStarters, row => row.commenterCount), AWARDS.conversationStarter)
+  addAward(awardsByPlayerId, idsAtExtreme(provocativePlayers, row => row.commenterCount), AWARDS.provocative)
 
   const audienceScores = buildAudienceScores({
     songs,

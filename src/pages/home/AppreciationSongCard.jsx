@@ -11,18 +11,15 @@ export default function AppreciationSongCard({
   player,
   roundId,
   onChanged,
-  isTopEntry = false,
   context = null,
   className = '',
   submitterNote = entry.submitter_note,
-  showListenLink = true,
 }) {
   const entryComments = commentsForEntry(comments, entry, commentsBySongId)
-  const listenUrl = entry.link || searchUrl('youtube', entry)
-  const listenLabel = entry.link ? serviceLabelForUrl(entry.link) : 'Find track'
+  const linkedService = serviceLabelForUrl(entry.link)
 
   return (
-    <article className={`song-card appreciation-song-card revealed ${isTopEntry ? 'top-entry' : ''} ${className}`.trim()}>
+    <article className={`song-card appreciation-song-card revealed ${className}`.trim()}>
       <div className="appreciation-card-body">
         {context && <div className="appreciation-card-context">{context}</div>}
 
@@ -36,14 +33,11 @@ export default function AppreciationSongCard({
               <strong>{entry.artist}</strong>
               {entry.album && <span>from {entry.album}</span>}
             </p>
-            {showListenLink && (
-              <a className="appreciation-listen-link" href={listenUrl} target="_blank" rel="noreferrer">
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M7.25 5.8v8.4L14 10 7.25 5.8Z" />
-                </svg>
-                {listenLabel}
-              </a>
-            )}
+            <div className="song-actions song-service-actions appreciation-song-actions">
+              {entry.link && <a href={entry.link} target="_blank" rel="noreferrer">{linkedService}</a>}
+              {linkedService !== 'Spotify' && <a href={searchUrl('spotify', entry)} target="_blank" rel="noreferrer">Spotify</a>}
+              {linkedService !== 'TIDAL' && <a href={searchUrl('tidal', entry)} target="_blank" rel="noreferrer">TIDAL</a>}
+            </div>
           </div>
 
           <div className="score-badge" aria-label={`${entry.totalPoints} point${entry.totalPoints === 1 ? '' : 's'}`}>
@@ -75,7 +69,7 @@ export default function AppreciationSongCard({
 
       <div className="appreciation-discussion">
         <div className="appreciation-discussion-heading">
-          <span>Appreciation</span>
+          <span>Comments</span>
           <span>{entryComments.length} note{entryComments.length === 1 ? '' : 's'}</span>
         </div>
         <CommentThread

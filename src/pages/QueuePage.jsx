@@ -45,6 +45,10 @@ export default function RoundsPage() {
     counts[song.round_id] = (counts[song.round_id] || 0) + 1
     return counts
   }, {}), [data.songs])
+  const playersWithoutRound = useMemo(() => {
+    const submitterIds = new Set(data.rounds.map(round => round.submitted_by_player_id).filter(Boolean))
+    return data.players.filter(row => row.active && !submitterIds.has(row.id))
+  }, [data.players, data.rounds])
 
   async function handleAdd(event) {
     event.preventDefault()
@@ -138,9 +142,7 @@ export default function RoundsPage() {
     <main className="page">
       <section className="page-header">
         <div>
-          <p className="eyebrow">Queue and history</p>
           <h1>Rounds</h1>
-          <p>One place for what is happening now, what is coming up, and what already happened.</p>
         </div>
         <button type="button" className="btn btn-primary" onClick={() => setShowAdd(value => !value)}>
           {showAdd ? 'Close' : 'Add round'}
@@ -239,6 +241,26 @@ export default function RoundsPage() {
           />
         ))}
       </RoundSection>
+
+      <section className="round-section">
+        <div className="section-heading">
+          <h2>Yet to submit a round</h2>
+        </div>
+        {playersWithoutRound.length === 0 ? (
+          <div className="empty-state compact">
+            <p>Everyone has submitted a round.</p>
+          </div>
+        ) : (
+          <div className="card round-submitter-list">
+            {playersWithoutRound.map(row => (
+              <div className="round-submitter" key={row.id}>
+                <Avatar player={row} size="sm" />
+                <strong>{row.name}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   )
 }
@@ -248,7 +270,6 @@ function RoundSection({ title, rows, children }) {
     <section className="round-section">
       <div className="section-heading">
         <h2>{title}</h2>
-        <span className="soft-tag">{rows.length}</span>
       </div>
       {rows.length === 0 ? (
         <div className="empty-state compact">
@@ -261,17 +282,13 @@ function RoundSection({ title, rows, children }) {
 
 function RoundCard({ row, currentPhase, controls, manage }) {
   const { round, state, timing } = row
-  const phaseLabel = state === 'current'
-    ? PHASES[currentPhase]?.label || 'Current'
-    : state === 'upcoming'
-      ? 'Scheduled'
-      : 'Past'
+  const phaseLabel = PHASES[currentPhase]?.label || 'Current'
 
   return (
     <article className={`round-card ${state}`}>
       <div className="round-card-main">
         <div className="round-card-topline">
-          <span className={`phase-pill phase-${state === 'current' ? currentPhase : state === 'upcoming' ? 'off' : 'appreciation'}`}>{phaseLabel}</span>
+          {state === 'current' && <span className={`phase-pill phase-${currentPhase}`}>{phaseLabel}</span>}
           <span className="round-week">Week of {formatPacificDate(timing.weekStart)}</span>
         </div>
         {manage?.editing ? (

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import SideRoster from '../../components/SideRoster.jsx'
 import { groupLabel } from '../../lib/groups.js'
 import { buildSongEntries, rankEntries } from '../../lib/scoring.js'
-import { VOTE_PROGRESS, votePointsByPlayer, voteProgressFor } from '../../lib/voteProgress.js'
+import { votePointsByPlayer } from '../../lib/voteProgress.js'
 import AppreciationSongCard from './AppreciationSongCard.jsx'
 import { indexCommentLikes, indexCommentsBySongId } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
@@ -21,12 +21,6 @@ export default function AppreciationView({ round, player, songs, votes, comments
   const rosterVotePoints = useMemo(() => votePointsByPlayer(votes), [votes])
   const commentsBySongId = useMemo(() => indexCommentsBySongId(comments), [comments])
   const commentLikesIndex = useMemo(() => indexCommentLikes(commentLikes), [commentLikes])
-  const voteCounts = useMemo(() => allPlayers.reduce((counts, rosterPlayer) => {
-    const progress = voteProgressFor(rosterVotePoints.get(rosterPlayer.id), pointsTotal, { final: true })
-    if (progress === VOTE_PROGRESS.COMPLETE) counts.complete += 1
-    if (progress === VOTE_PROGRESS.PARTIAL) counts.partial += 1
-    return counts
-  }, { complete: 0, partial: 0 }), [allPlayers, rosterVotePoints, pointsTotal])
   const isSplit = Boolean(sides?.isSplit)
   const playerSide = sides?.sideByPlayerId?.[player.id]
   const defaultSide = playerSide === 0 || playerSide === 1 ? playerSide : 0
@@ -47,11 +41,6 @@ export default function AppreciationView({ round, player, songs, votes, comments
   return (
     <section className="phase-layout appreciation-layout">
       <aside className="side-panel appreciation-roster">
-        <p className="eyebrow">Round roll call</p>
-        <p className="roster-summary">
-          {submittedIds.size}/{allPlayers.length} songs · {voteCounts.complete}/{allPlayers.length} voted
-          {voteCounts.partial > 0 ? ` · ${voteCounts.partial} partial` : ''}
-        </p>
         {isSplit ? (
           <div className="voting-sides">
             {sideOrder.map(side => (
@@ -100,12 +89,12 @@ export default function AppreciationView({ round, player, songs, votes, comments
           </div>
         )}
 
-        <PlaylistPanel playlists={activePlaylists} />
-
-        <div className="ranking-heading">
-          <p className="eyebrow">Final ranking</p>
-          {isSplit && <p>Overall places · showing {groupLabel(activeSide)}</p>}
-        </div>
+        <PlaylistPanel
+          playlists={activePlaylists}
+          roundId={round.id}
+          side={activeSide}
+          onChanged={onChanged}
+        />
 
         {activeEntries.length === 0 ? (
           <div className="empty-state">
@@ -123,7 +112,6 @@ export default function AppreciationView({ round, player, songs, votes, comments
             player={player}
             roundId={round.id}
             onChanged={onChanged}
-            isTopEntry={entry.rank === 1 && entry.totalPoints > 0}
           />
         ))}
       </section>
