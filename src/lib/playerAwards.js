@@ -139,6 +139,22 @@ const AWARDS = {
     title:
       "Gives the most ballot support to songs the rest of their voting pool overlooks.",
   },
+  fastest: {
+    key: "fastest",
+    label: "Eager Beaver",
+    className: "badge-fastest",
+    icon: "bolt",
+    title:
+      "Most consistently submits songs and completes full ballots ahead of the pack.",
+  },
+  slowest: {
+    key: "slowest",
+    label: "Procrastinator",
+    className: "badge-slowest",
+    icon: "hourglass",
+    title:
+      "Most consistently submits songs and completes full ballots later than the pack.",
+  },
 };
 
 const AWARD_ORDER = new Map(
@@ -176,6 +192,123 @@ function idsAtStandingExtreme(rows, fairScores, mode = "max") {
     (row) => Number(fairScores[row.id]?.total) || 0,
     mode,
   );
+}
+
+function timestampValue(value) {
+  if (!value) return null;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+// Rank each action against the other finishers in that round. This keeps schedule
+// changes from making one week's raw elapsed time incomparable with another's.
+function addPaceRanks(rows, category, paceByPlayerId) {
+  const rankedRows = rows
+    .map((row) => ({ ...row, timestamp: timestampValue(row.timestamp) }))
+    .filter((row) => row.id && row.timestamp !== null)
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  if (rankedRows.length < 2) return;
+
+  let index = 0;
+  while (index < rankedRows.length) {
+    let tieEnd = index + 1;
+    while (
+      tieEnd < rankedRows.length &&
+      rankedRows[tieEnd].timestamp === rankedRows[index].timestamp
+    ) {
+      tieEnd += 1;
+    }
+
+    const averageRank = (index + tieEnd - 1) / 2;
+    const percentile = averageRank / (rankedRows.length - 1);
+    for (let tieIndex = index; tieIndex < tieEnd; tieIndex += 1) {
+      const playerId = rankedRows[tieIndex].id;
+      if (!paceByPlayerId[playerId]) {
+        paceByPlayerId[playerId] = {
+          id: playerId,
+          submissionTotal: 0,
+          submissionCount: 0,
+          votingTotal: 0,
+          votingCount: 0,
+        };
+      }
+      paceByPlayerId[playerId][`${category}Total`] += percentile;
+      paceByPlayerId[playerId][`${category}Count`] += 1;
+    }
+
+    index = tieEnd;
+  }
+}
+
+function buildPaceRows({
+  players = [],
+  songs = [],
+  votes = [],
+  scoredRoundIds = new Set(),
+  pointsPerPlayer = 10,
+}) {
+  const fullBallotPoints = Math.max(1, Number(pointsPerPlayer) || 10);
+  const paceByPlayerId = Object.fromEntries(
+    players.map((player) => [
+      player.id,
+      {
+        id: player.id,
+        submissionTotal: 0,
+        submissionCount: 0,
+        votingTotal: 0,
+        votingCount: 0,
+      },
+    ]),
+  );
+
+  for (const roundId of scoredRoundIds) {
+    // created_at preserves the player's first submission even if they edit it later.
+    addPaceRanks(
+      songs
+        .filter((song) => song.round_id === roundId)
+        .map((song) => ({ id: song.player_id, timestamp: song.created_at })),
+      "submission",
+      paceByPlayerId,
+    );
+
+    const ballotsByPlayerId = new Map();
+    for (const vote of votes) {
+      if (vote.round_id !== roundId || !vote.voter_player_id) continue;
+      if (!ballotsByPlayerId.has(vote.voter_player_id)) {
+        ballotsByPlayerId.set(vote.voter_player_id, {
+          points: 0,
+          completedAt: null,
+        });
+      }
+
+      const ballot = ballotsByPlayerId.get(vote.voter_player_id);
+      ballot.points += Math.max(0, Number(vote.points) || 0);
+      const updatedAt = timestampValue(vote.updated_at || vote.created_at);
+      if (updatedAt !== null) {
+        ballot.completedAt = Math.max(ballot.completedAt ?? updatedAt, updatedAt);
+      }
+    }
+
+    addPaceRanks(
+      [...ballotsByPlayerId.entries()]
+        .filter(([, ballot]) => ballot.points === fullBallotPoints)
+        // The latest surviving vote write is when the final full ballot was saved.
+        .map(([id, ballot]) => ({ id, timestamp: ballot.completedAt })),
+      "voting",
+      paceByPlayerId,
+    );
+  }
+
+  return Object.values(paceByPlayerId)
+    .filter((row) => row.submissionCount >= 2 && row.votingCount >= 2)
+    .map((row) => ({
+      id: row.id,
+      pace:
+        (row.submissionTotal / row.submissionCount +
+          row.votingTotal / row.votingCount) /
+        2,
+    }));
 }
 
 function winningPlayerIdsForRound({
@@ -533,6 +666,31 @@ export function buildPlayerAwards({
       awardsByPlayerId,
       idsAtExtreme(experiencedListeners, (row) => row.uniquenessScore),
       AWARDS.deepCut,
+    );
+  }
+
+  const paceRows = buildPaceRows({
+    players,
+    songs,
+    votes,
+    scoredRoundIds,
+    pointsPerPlayer,
+  });
+  const paceRange =
+    paceRows.length > 1
+      ? Math.max(...paceRows.map((row) => row.pace)) -
+        Math.min(...paceRows.map((row) => row.pace))
+      : 0;
+  if (paceRange > 1e-9) {
+    addAward(
+      awardsByPlayerId,
+      idsAtExtreme(paceRows, (row) => row.pace, "min"),
+      AWARDS.fastest,
+    );
+    addAward(
+      awardsByPlayerId,
+      idsAtExtreme(paceRows, (row) => row.pace),
+      AWARDS.slowest,
     );
   }
 

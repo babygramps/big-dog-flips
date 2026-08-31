@@ -5,6 +5,7 @@ const ITEMS = [
   { path: '/', Icon: HomeIcon, label: 'Home', tone: 'home' },
   { path: '/rounds', Icon: RoundsIcon, label: 'Rounds', tone: 'rounds' },
   { path: '/players', Icon: PlayersIcon, label: 'Players', tone: 'players' },
+  { path: '/songs', Icon: SongsIcon, label: 'Songs', tone: 'songs' },
   { path: '/admin', Icon: AdminIcon, label: 'Admin', tone: 'admin' },
 ]
 
@@ -62,6 +63,18 @@ function PlayersIcon() {
       <circle className="nav-icon-core" cx="13" cy="12" r="7" />
       <path className="nav-icon-line-fill" d="M5 25c1.5-5.4 5-8 10-8s8.5 2.6 10 8H5Z" />
       <circle className="nav-icon-hole" cx="13" cy="12" r="2" />
+    </svg>
+  )
+}
+
+function SongsIcon() {
+  return (
+    <svg viewBox="0 0 32 32" focusable="false">
+      <path className="nav-icon-pop" d="M9 7h16v18H9Z" />
+      <path className="nav-icon-core" d="M6 5h16v18H6Z" />
+      <circle className="nav-icon-hole" cx="14" cy="14" r="5" />
+      <circle className="nav-icon-line-fill" cx="14" cy="14" r="1.5" />
+      <path className="nav-icon-line" d="M19 7h3M19 21h3" />
     </svg>
   )
 }

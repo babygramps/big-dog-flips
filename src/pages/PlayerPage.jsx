@@ -3,15 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
 import Avatar from '../components/Avatar.jsx'
 import MedalIcon from '../components/MedalIcon.jsx'
+import PlayerSubmissionCard from '../components/PlayerSubmissionCard.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
 import { EMPTY_PLAYER_PROFILE_DATA, fetchPlayerProfileData, PLAYER_PROFILE_REALTIME_TABLES } from '../lib/data.js'
-import { groupLabel, sidesForRound } from '../lib/groups.js'
+import { sidesForRound } from '../lib/groups.js'
 import { clearProfilePictureUrl, saveProfileName, saveProfilePictureUrl } from '../lib/mutations.js'
 import { buildPlayerAwards } from '../lib/playerAwards.js'
 import { uploadProfilePicture } from '../lib/profilePictures.js'
 import { buildFairScores, buildLeaderboard, buildSongEntries, rankEntries } from '../lib/scoring.js'
-import { formatPacificDate, getRoundWeekStart, getScoredRoundIds, sortedRounds } from '../lib/schedule.js'
-import AppreciationSongCard from './home/AppreciationSongCard.jsx'
+import { getRoundWeekStart, getScoredRoundIds, sortedRounds } from '../lib/schedule.js'
 import { indexCommentLikes, indexCommentsBySongId } from './home/homeUtils.js'
 
 export default function PlayerPage() {
@@ -459,7 +459,7 @@ export default function PlayerPage() {
         ) : (
           <div className="song-stack">
             {submissions.map(submission => (
-              <PlayerSubmission
+              <PlayerSubmissionCard
                 key={submission.id}
                 submission={submission}
                 comments={data.comments}
@@ -542,34 +542,4 @@ function FairScoreModal({ pointsPerPlayer, onClose }) {
 
 function formatFairNumber(value) {
   return Number.isInteger(value) ? value : Number(value.toFixed(2))
-}
-
-function PlayerSubmission({ submission, comments, commentsBySongId, commentLikes, commentLikesIndex, player, onChanged }) {
-  const { entry, round, song, weekStart } = submission
-
-  return (
-    <AppreciationSongCard
-      entry={entry}
-      comments={comments}
-      commentsBySongId={commentsBySongId}
-      commentLikes={commentLikes}
-      commentLikesIndex={commentLikesIndex}
-      player={player}
-      roundId={round.id}
-      onChanged={onChanged}
-      className="player-submission-card"
-      submitterNote={song?.submitter_note ?? entry.submitter_note}
-      context={(
-        <>
-          <div>
-            <p className="eyebrow">Week of {formatPacificDate(weekStart)}</p>
-            <p className="player-submission-theme">{round.theme_name}</p>
-          </div>
-          {entry.side !== null && entry.side !== undefined && (
-            <span className={`side-tag side-${entry.side}`}>{groupLabel(entry.side)}</span>
-          )}
-        </>
-      )}
-    />
-  )
 }

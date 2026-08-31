@@ -118,12 +118,11 @@ export default function PlayerListPage() {
         ) : (
           <div className="card leaderboard-list player-standings-list">
             {rankedPlayers.map((row, index) => {
-              const isFirstPlace = index === 0 && row.total > 0
               const topSong = topSongsByPlayerId[row.id]
 
               return (
                 <Link
-                  className={`leader-row player-standings-row player-row-link ${isFirstPlace ? 'is-first-place' : ''} ${row.id === player.id ? 'is-you' : ''} ${row.active ? '' : 'inactive'}`}
+                  className={`leader-row player-standings-row player-row-link ${row.active ? '' : 'inactive'}`}
                   to={`/players/${row.id}`}
                   key={row.id}
                   onFocus={preloadPlayerPage}

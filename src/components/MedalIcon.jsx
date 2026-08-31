@@ -95,6 +95,21 @@ function IconPaths({ name }) {
           <path d="M7 11h18M11 6l5 5 5-5M12 11l4 15 4-15" />
         </>
       )
+    case 'bolt':
+      return (
+        <>
+          <path d="m18.5 3-11 15h7l-1 11 11-16h-7Z" />
+          <path d="M5 25h5M22 7h5" />
+        </>
+      )
+    case 'hourglass':
+      return (
+        <>
+          <path d="M9 5h14M9 27h14" />
+          <path d="M11 6c0 5 1.4 7.4 5 10-3.6 2.6-5 5-5 10M21 6c0 5-1.4 7.4-5 10 3.6 2.6 5 5 5 10" />
+          <path d="m12.5 23 3.5-4 3.5 4Z" fill="currentColor" stroke="none" />
+        </>
+      )
     case 'waveform':
       return (
         <>

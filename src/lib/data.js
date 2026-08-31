@@ -8,7 +8,7 @@ const ROUND_FIELDS = 'id, theme_name, theme_description, queue_position, submitt
 const ROUND_WITH_PLAYER = `${ROUND_FIELDS}, players(${PLAYER_EMBED_FIELDS})`
 const SONG_FIELDS = 'id, round_id, player_id, artist, title, album, link, submitter_note, created_at'
 const SONG_WITH_PLAYER = `${SONG_FIELDS}, players(${PLAYER_EMBED_FIELDS})`
-const VOTE_FIELDS = 'id, round_id, song_id, voter_player_id, points'
+const VOTE_FIELDS = 'id, round_id, song_id, voter_player_id, points, created_at, updated_at'
 const COMMENT_FIELDS = 'id, round_id, song_id, player_id, body, gif_url, gif_preview_url, gif_provider, gif_id, created_at'
 // Pin this to the direct author relationship. comment_likes also links comments
 // and players, so an unqualified `players(...)` embed is ambiguous to PostgREST.
@@ -26,6 +26,7 @@ export const HOME_REALTIME_TABLES = [...new Set([...HOME_CORE_REALTIME_TABLES, .
 export const ROUNDS_REALTIME_TABLES = ['rounds', 'songs', 'players']
 export const PLAYER_REALTIME_TABLES = ['players', 'rounds', 'songs', 'votes', 'comments', 'duplicate_groups', 'duplicate_group_songs', 'round_groups']
 export const PLAYER_PROFILE_REALTIME_TABLES = [...PLAYER_REALTIME_TABLES, 'comment_likes']
+export const PAST_SONGS_REALTIME_TABLES = PLAYER_PROFILE_REALTIME_TABLES
 export const ADMIN_REALTIME_TABLES = ['rounds', 'songs', 'votes', 'duplicate_groups', 'duplicate_group_songs', 'players', 'round_groups']
 export const ADMIN_SUMMARY_REALTIME_TABLES = ['rounds', 'players']
 
@@ -111,6 +112,8 @@ export const EMPTY_PLAYER_PROFILE_DATA = {
   ...EMPTY_PLAYER_DATA,
   commentLikes: [],
 }
+
+export const EMPTY_PAST_SONGS_DATA = EMPTY_PLAYER_PROFILE_DATA
 
 export const EMPTY_ADMIN_DATA = {
   rounds: [],
@@ -339,6 +342,10 @@ export function fetchPlayerData(settings) {
 }
 
 export function fetchPlayerProfileData(settings) {
+  return fetchSeasonScoringData({ settings, includeCommentDetails: true, includeCommentLikes: true })
+}
+
+export function fetchPastSongsData(settings) {
   return fetchSeasonScoringData({ settings, includeCommentDetails: true, includeCommentLikes: true })
 }
 

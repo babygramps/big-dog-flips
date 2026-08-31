@@ -6,6 +6,7 @@ import {
   loadAdminPage,
   loadJoinScreen,
   loadPastRoundPage,
+  loadPastSongsPage,
   loadPlayerListPage,
   loadPlayerPage,
   loadRoundsPage,
@@ -18,6 +19,7 @@ import Nav from './components/Nav.jsx'
 const AdminPage = lazy(loadAdminPage)
 const JoinScreen = lazy(loadJoinScreen)
 const PastRoundPage = lazy(loadPastRoundPage)
+const PastSongsPage = lazy(loadPastSongsPage)
 const PlayerPage = lazy(loadPlayerPage)
 const PlayerListPage = lazy(loadPlayerListPage)
 const RoundsPage = lazy(loadRoundsPage)
@@ -195,6 +197,7 @@ export default function App() {
               <Route path="/rounds/:roundId" element={<PastRoundPage />} />
               <Route path="/players" element={<PlayerListPage />} />
               <Route path="/players/:playerId" element={<PlayerPage />} />
+              <Route path="/songs" element={<PastSongsPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/queue" element={<Navigate to="/rounds" replace />} />
               <Route path="/leaderboard" element={<Navigate to="/players" replace />} />

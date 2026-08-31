@@ -3,11 +3,13 @@ export const loadRoundsPage = () => import('../pages/QueuePage.jsx')
 export const loadPastRoundPage = () => import('../pages/PastRoundPage.jsx')
 export const loadPlayerListPage = () => import('../pages/PlayerListPage.jsx')
 export const loadPlayerPage = () => import('../pages/PlayerPage.jsx')
+export const loadPastSongsPage = () => import('../pages/PastSongsPage.jsx')
 export const loadAdminPage = () => import('../pages/SettingsPage.jsx')
 
 const loadersByPath = {
   '/rounds': loadRoundsPage,
   '/players': loadPlayerListPage,
+  '/songs': loadPastSongsPage,
   '/admin': loadAdminPage,
 }
 
