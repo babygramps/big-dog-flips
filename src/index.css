@@ -2441,6 +2441,7 @@ select:focus {
 .past-song-stack {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .past-song-ranked-row {
@@ -2448,8 +2449,13 @@ select:focus {
   grid-template-columns: 3.25rem minmax(0, 1fr);
   align-items: start;
   gap: 0.7rem;
+  min-width: 0;
   content-visibility: auto;
   contain-intrinsic-size: auto 480px;
+}
+
+.past-song-ranked-row > * {
+  min-width: 0;
 }
 
 .past-song-rank {
@@ -3521,7 +3527,7 @@ select:focus {
   }
 
   .past-song-ranked-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.45rem;
   }
 
