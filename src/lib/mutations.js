@@ -187,7 +187,7 @@ export async function moveUpcomingRound({ round, direction, upcomingRows, schedu
 export async function saveLeagueSettings({ form, rounds }) {
   const payload = {
     id: 1,
-    league_name: form.league_name.trim() || 'Muzak de Seattle',
+    league_name: form.league_name.trim() || 'Big Dog Flips',
     season_label: form.season_label.trim() || 'Season 2',
     points_per_player: Math.max(1, Number(form.points_per_player) || 10),
     schedule_start_date: form.schedule_start_date || getCurrentMonday(),

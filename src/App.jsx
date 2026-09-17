@@ -39,11 +39,11 @@ function SetupRequired() {
   return (
     <main className="setup-screen">
       <div className="setup-panel">
-        <span className="bubble-mark">M2</span>
-        <h1>Muzak Season 2</h1>
+        <span className="bubble-mark">BDF</span>
+        <h1>Big Dog Flips</h1>
         <p>
-          Add Supabase environment variables to run the Season 2 database.
-          The setup SQL and Netlify notes are in `SETUP.md`.
+          Add Supabase environment variables to run the league database.
+          The setup SQL is in `SETUP.md`.
         </p>
       </div>
     </main>
@@ -170,8 +170,8 @@ export default function App() {
   if (loading) {
     return (
       <main className="loading-screen">
-        <span className="bubble-mark">M2</span>
-        <p>Loading Muzak...</p>
+        <span className="bubble-mark">BDF</span>
+        <p>Loading Big Dog Flips...</p>
       </main>
     )
   }

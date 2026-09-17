@@ -1,4 +1,4 @@
-# Muzak Season 2 Setup
+# Big Dog Flips Setup
 
 Season 2 should use a fresh Supabase project. Keep the old Supabase project online for the Season 1 time capsule, then point the current Netlify site at the new Season 2 credentials.
 

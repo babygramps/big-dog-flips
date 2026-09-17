@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This repository is Muzak Season 2: a Vite + React SPA backed by a fresh Supabase database.
+This repository is Big Dog Flips, a fork of Muzak Season 2: a Vite + React SPA backed by a fresh Supabase database.
 
 ## Toy Project Workflow
 
@@ -22,12 +22,12 @@ The `db:*` scripts run `scripts/migrate.mjs`, which applies migrations through t
 
 ## Deployment
 
-The app is deployed on the existing Netlify site, which builds from this repo. Pushing to `main` deploys; there is no manual upload step. Supabase credentials come from Vite environment variables:
+The app is deployed on Vercel (project `big-dog-flips`), which builds from this repo. Pushing to `main` deploys; there is no manual upload step. Supabase is provisioned through the Vercel Marketplace, which injects the `NEXT_PUBLIC_*` variables below. Supabase credentials come from Vite environment variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL` or `VITE_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `VITE_SUPABASE_ANON_KEY`
 
-Do not hardcode Supabase credentials in source. `public/_redirects` provides SPA fallback routing.
+Do not hardcode Supabase credentials in source. `vercel.json` provides SPA fallback routing and cache headers.
 
 ## No Auth
 

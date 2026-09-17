@@ -12,8 +12,8 @@ function randomAvatarColor() {
 export default function JoinScreen({ onJoin, settings }) {
   const [name, setName] = useState('')
   const [players, setPlayers] = useState([])
-  const [leagueName, setLeagueName] = useState('Muzak')
-  const [seasonLabel, setSeasonLabel] = useState('Season 2')
+  const [leagueName, setLeagueName] = useState('Big Dog Flips')
+  const [seasonLabel, setSeasonLabel] = useState('Season 1')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -65,7 +65,7 @@ export default function JoinScreen({ onJoin, settings }) {
   return (
     <main className="join-screen">
       <section className="join-hero">
-        <span className="bubble-mark">M2</span>
+        <span className="bubble-mark">BDF</span>
         <p className="eyebrow">{seasonLabel}</p>
         <h1>{leagueName}</h1>
         <p className="join-copy">Pick your profile and get to the songs.</p>
@@ -105,7 +105,7 @@ export default function JoinScreen({ onJoin, settings }) {
             </label>
             {error && <p className="error-msg">{error}</p>}
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading || !name.trim()}>
-              {loading ? 'Joining...' : 'Enter Muzak'}
+              {loading ? 'Joining...' : 'Enter Big Dog Flips'}
             </button>
           </form>
         </div>

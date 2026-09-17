@@ -1,6 +1,6 @@
-# Muzak de Seattle
+# Big Dog Flips
 
-Vite + React app for Muzak Season 2, backed by Supabase.
+Vite + React app for the Big Dog Flips music league, backed by Supabase. Forked from [alexcrist/muzakdeseattle](https://github.com/alexcrist/muzakdeseattle).
 
 ## Setup
 

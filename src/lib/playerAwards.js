@@ -54,7 +54,7 @@ const AWARDS = {
     label: "Season 1 Winner",
     className: "badge-season-one-winner",
     icon: "trophy",
-    title: "Won Muzak Season 1.",
+    title: "Won Season 1.",
   },
   highsAndLows: {
     key: "highs-and-lows",

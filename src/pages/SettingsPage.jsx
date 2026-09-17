@@ -32,7 +32,7 @@ export default function AdminPage() {
   })
   const [adminUnlocked, setAdminUnlocked] = useState(false)
   const [form, setForm] = useState({
-    league_name: settings?.league_name || 'Muzak de Seattle',
+    league_name: settings?.league_name || 'Big Dog Flips',
     season_label: settings?.season_label || 'Season 2',
     points_per_player: settings?.points_per_player || 10,
     schedule_start_date: settings?.schedule_start_date || getCurrentMonday(),
@@ -43,7 +43,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!settings) return
     setForm({
-      league_name: settings.league_name || 'Muzak de Seattle',
+      league_name: settings.league_name || 'Big Dog Flips',
       season_label: settings.season_label || 'Season 2',
       points_per_player: settings.points_per_player || 10,
       schedule_start_date: settings.schedule_start_date || getCurrentMonday(),
