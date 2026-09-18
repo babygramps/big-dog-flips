@@ -198,6 +198,7 @@ export default function VotingView({
                       {song.link && <a href={song.link} target="_blank" rel="noreferrer">{linkedService}</a>}
                       {linkedService !== 'Spotify' && <a href={searchUrl('spotify', song)} target="_blank" rel="noreferrer">Spotify</a>}
                       {linkedService !== 'TIDAL' && <a href={searchUrl('tidal', song)} target="_blank" rel="noreferrer">TIDAL</a>}
+                      {linkedService !== 'Apple Music' && <a href={searchUrl('apple', song)} target="_blank" rel="noreferrer">Apple Music</a>}
                     </div>
 
                     {song.submitter_note && <p className="note">{song.submitter_note}</p>}

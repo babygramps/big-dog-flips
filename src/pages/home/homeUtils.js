@@ -66,6 +66,7 @@ export function searchUrl(service, song) {
   const query = songQuery(song)
   if (service === 'spotify') return `https://open.spotify.com/search/${query}`
   if (service === 'tidal') return `https://tidal.com/search?q=${query}`
+  if (service === 'apple') return `https://music.apple.com/us/search?term=${query}`
   return `https://www.youtube.com/results?search_query=${query}`
 }
 

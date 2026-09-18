@@ -37,6 +37,7 @@ export default function AppreciationSongCard({
               {entry.link && <a href={entry.link} target="_blank" rel="noreferrer">{linkedService}</a>}
               {linkedService !== 'Spotify' && <a href={searchUrl('spotify', entry)} target="_blank" rel="noreferrer">Spotify</a>}
               {linkedService !== 'TIDAL' && <a href={searchUrl('tidal', entry)} target="_blank" rel="noreferrer">TIDAL</a>}
+              {linkedService !== 'Apple Music' && <a href={searchUrl('apple', entry)} target="_blank" rel="noreferrer">Apple Music</a>}
             </div>
           </div>
 
