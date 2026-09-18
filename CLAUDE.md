@@ -70,7 +70,7 @@ A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two si
 
 - Each player spends `league_settings.points_per_player` points per round, default 10. There is no per-song cap; the whole bank can go on one song.
 - Players cannot score their own song. The UI omits the controls, and `src/lib/scoring.js` also discards self-votes at scoring time, so a stray row can never inflate a total.
-- Songs are anonymous during voting. So are comments, behind a per-round alias from `src/lib/anonymousNames.js`. Appreciation reveals both.
+- Songs are anonymous during voting. Comment names use a per-round alias from `src/lib/anonymousNames.js`; comment photos always match the author's profile photo. Appreciation reveals song submitters and comment names.
 - Each player sees the songs in their own order (`src/lib/listeningOrder.js`) so submission order does not bias results. Both the alias and the order are derived by hashing round plus player, so they are stable without being stored.
 - Vote writes are debounced in `src/hooks/useDebouncedVotes.js`. Votes always stay attached to the original song row, including through duplicate merges.
 
@@ -118,3 +118,5 @@ The schema source of truth is `supabase/migrations/`; `SETUP.md` documents how t
 ## Profile Pictures
 
 Profile pictures use the public Supabase Storage bucket `profile-pictures`. Uploads are resized in the browser before being stored at `players/<player-id>/avatar.webp`, and the resulting public URL is saved to `players.avatar_url`.
+
+Comment photos and the voting alias card must always use `players.avatar_url`, with the same default image as the profile when no photo is set. Do not assign separate anonymous photos or cycle them per round. A requested new dog photo should update the player's profile photo so it changes everywhere. Real, non-AI dog photographs are bundled in `public/anonymous-dogs/` with source credits.

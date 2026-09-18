@@ -67,23 +67,3 @@ export function anonymousNameFor(roundId, playerId) {
   const noun = NOUNS[Math.floor(hash / ADJECTIVES.length) % NOUNS.length]
   return `${adjective} ${noun}`
 }
-
-// Explicit photo cycles are scoped to a round and player, leaving future rounds unchanged.
-const AVATAR_CYCLES = {
-  '9b1aeda2-f170-47e0-a4fe-cc016e08eb58:f88c4fa7-a2e9-48f0-93fd-93d495fee7b8': 1,
-}
-
-// Gramps requested the same profile photo in both named and anonymous views.
-const USE_PROFILE_PHOTO = new Set(['8b0e3ffd-2ee9-4c40-8848-141e938d255e'])
-
-export function anonymousAvatarFor(roundId, playerId, profileAvatarUrl = null) {
-  // A null URL lets Avatar use the same default as the player's profile.
-  if (USE_PROFILE_PHOTO.has(playerId)) return profileAvatarUrl || null
-
-  // Fixed, locally bundled photographs; provenance is in public/anonymous-dogs/SOURCES.md.
-  // Hash independently of the alias so a photo doesn't give away either part of the name.
-  const hash = hashString(`big-dog-anon-photo-v1:${roundId || 'round'}:${playerId || 'player'}`)
-  const cycle = AVATAR_CYCLES[`${roundId}:${playerId}`] || 0
-  const photoNumber = String(((hash + cycle) % 48) + 1).padStart(2, '0')
-  return `/anonymous-dogs/dog-${photoNumber}.jpg`
-}

@@ -8,8 +8,8 @@ with community-contributed photographs in Dog API Images.
 The upstream GPL-3.0 license is included in `LICENSE` alongside these photographs.
 
 These files are bundled locally. No runtime image service or API key is needed.
-Do not reorder or replace the numbered files: anonymous avatar selection hashes the round and player
-into this fixed list so that everyone sees the same photo throughout a round.
+Photos are assigned through `players.avatar_url`, so profiles and comments share the same image.
+Keep numbered filenames stable because saved player profiles may reference them.
 
 | Local file | Original source |
 | --- | --- |

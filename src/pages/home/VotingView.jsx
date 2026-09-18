@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
-import { anonymousAvatarFor, anonymousNameFor } from '../../lib/anonymousNames.js'
+import { anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
 import { votePointsByPlayer } from '../../lib/voteProgress.js'
@@ -134,7 +134,7 @@ export default function VotingView({
             />
           </div>
         )}
-        <AnonymousPersonaCard name={myAnonymousName} roundId={round.id} player={player} />
+        <AnonymousPersonaCard name={myAnonymousName} roundId={round.id} player={allPlayers.find(row => row.id === player.id) || player} />
       </aside>
 
       <section className="song-stack">
@@ -277,7 +277,7 @@ function AnonymousPersonaCard({ name, roundId, player }) {
         player={{
           id: `anon-${roundId}-${player.id}`,
           name,
-          avatar_url: anonymousAvatarFor(roundId, player.id, player.avatar_url),
+          avatar_url: player.avatar_url,
         }}
         size="sm"
         linkToProfile={false}
