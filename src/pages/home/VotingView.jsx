@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
-import { anonymousNameFor } from '../../lib/anonymousNames.js'
+import { anonymousAvatarFor, anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
 import { votePointsByPlayer } from '../../lib/voteProgress.js'
@@ -133,7 +134,7 @@ export default function VotingView({
             />
           </div>
         )}
-        <AnonymousPersonaCard name={myAnonymousName} />
+        <AnonymousPersonaCard name={myAnonymousName} roundId={round.id} playerId={player.id} />
       </aside>
 
       <section className="song-stack">
@@ -269,9 +270,18 @@ function VoteTokenBank({ total, used }) {
   )
 }
 
-function AnonymousPersonaCard({ name }) {
+function AnonymousPersonaCard({ name, roundId, playerId }) {
   return (
     <div className="persona-card">
+      <Avatar
+        player={{
+          id: `anon-${roundId}-${playerId}`,
+          name,
+          avatar_url: anonymousAvatarFor(roundId, playerId),
+        }}
+        size="sm"
+        linkToProfile={false}
+      />
       <span className="eyebrow">Comment alias</span>
       <strong>{name}</strong>
     </div>

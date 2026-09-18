@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
+import { anonymousAvatarFor } from '../../lib/anonymousNames.js'
 import { deleteComment as removeComment, postComment as saveComment, toggleCommentLike } from '../../lib/mutations.js'
 import { indexCommentLikes } from './homeUtils.js'
 
@@ -91,11 +92,19 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
             const liked = likes.some(like => like.player_id === player.id)
             return (
               <div className={`comment ${author ? '' : 'anonymous-comment'}`} key={comment.id}>
-                {compact && <span className="comment-mark" aria-hidden="true">↳</span>}
-                {!compact && (author ? (
+                {compact && author && <span className="comment-mark" aria-hidden="true">↳</span>}
+                {(!compact || !author) && (author ? (
                   <Avatar player={author} size="xs" />
                 ) : (
-                  <Avatar player={{ id: `anon-${roundId}-${comment.player_id}`, name: anonymousName }} size="xs" />
+                  <Avatar
+                    player={{
+                      id: `anon-${roundId}-${comment.player_id}`,
+                      name: anonymousName,
+                      avatar_url: anonymousAvatarFor(roundId, comment.player_id),
+                    }}
+                    size="xs"
+                    linkToProfile={false}
+                  />
                 ))}
                 <div>
                   <strong className={author ? '' : 'anon-name'}>{author ? `${author.name}${isMine ? ' (you)' : ''}` : `${anonymousName}${isMine ? ' (you)' : ''}`}</strong>

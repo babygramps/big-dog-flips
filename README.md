@@ -18,6 +18,11 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Optional: add `VITE_GIPHY_API_KEY` to enable the GIF search picker in comments.
 
+Anonymous comments use real dog photographs bundled in `public/anonymous-dogs/`,
+selected consistently from the round and player IDs. The same photo appears in the
+voting sidebar's comment alias. Photos come from a December 2019 archive of Dog API
+Images; source links and the upstream license are included alongside the images.
+
 Existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values are still accepted for compatibility.
 
 ## Development

@@ -67,3 +67,11 @@ export function anonymousNameFor(roundId, playerId) {
   const noun = NOUNS[Math.floor(hash / ADJECTIVES.length) % NOUNS.length]
   return `${adjective} ${noun}`
 }
+
+export function anonymousAvatarFor(roundId, playerId) {
+  // Fixed, locally bundled photographs; provenance is in public/anonymous-dogs/SOURCES.md.
+  // Hash independently of the alias so a photo doesn't give away either part of the name.
+  const hash = hashString(`big-dog-anon-photo-v1:${roundId || 'round'}:${playerId || 'player'}`)
+  const photoNumber = String((hash % 48) + 1).padStart(2, '0')
+  return `/anonymous-dogs/dog-${photoNumber}.jpg`
+}
