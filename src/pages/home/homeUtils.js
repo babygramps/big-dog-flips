@@ -48,6 +48,7 @@ export function serviceLabelForUrl(url = '') {
     const host = new URL(url).hostname.replace(/^www\./, '')
     if (host.includes('spotify.com')) return 'Spotify'
     if (host.includes('tidal.com')) return 'TIDAL'
+    if (host === 'music.youtube.com') return 'YouTube Music'
     if (host.includes('youtube.com') || host.includes('youtu.be')) return 'YouTube'
     if (host.includes('bandcamp.com')) return 'Bandcamp'
     if (host.includes('soundcloud.com')) return 'SoundCloud'
@@ -67,6 +68,7 @@ export function searchUrl(service, song) {
   if (service === 'spotify') return `https://open.spotify.com/search/${query}`
   if (service === 'tidal') return `https://tidal.com/search?q=${query}`
   if (service === 'apple') return `https://music.apple.com/us/search?term=${query}`
+  if (service === 'youtube-music') return `https://music.youtube.com/search?q=${query}`
   return `https://www.youtube.com/results?search_query=${query}`
 }
 
