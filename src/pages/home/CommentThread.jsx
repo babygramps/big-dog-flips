@@ -100,7 +100,7 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
                     player={{
                       id: `anon-${roundId}-${comment.player_id}`,
                       name: anonymousName,
-                      avatar_url: anonymousAvatarFor(roundId, comment.player_id),
+                      avatar_url: anonymousAvatarFor(roundId, comment.player_id, comment.players?.avatar_url),
                     }}
                     size="xs"
                     linkToProfile={false}

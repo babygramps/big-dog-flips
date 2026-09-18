@@ -134,7 +134,7 @@ export default function VotingView({
             />
           </div>
         )}
-        <AnonymousPersonaCard name={myAnonymousName} roundId={round.id} playerId={player.id} />
+        <AnonymousPersonaCard name={myAnonymousName} roundId={round.id} player={player} />
       </aside>
 
       <section className="song-stack">
@@ -270,14 +270,14 @@ function VoteTokenBank({ total, used }) {
   )
 }
 
-function AnonymousPersonaCard({ name, roundId, playerId }) {
+function AnonymousPersonaCard({ name, roundId, player }) {
   return (
     <div className="persona-card">
       <Avatar
         player={{
-          id: `anon-${roundId}-${playerId}`,
+          id: `anon-${roundId}-${player.id}`,
           name,
-          avatar_url: anonymousAvatarFor(roundId, playerId),
+          avatar_url: anonymousAvatarFor(roundId, player.id, player.avatar_url),
         }}
         size="sm"
         linkToProfile={false}

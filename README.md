@@ -22,6 +22,8 @@ Anonymous comments use real dog photographs bundled in `public/anonymous-dogs/`,
 selected consistently from the round and player IDs. The same photo appears in the
 voting sidebar's comment alias. Photos come from a December 2019 archive of Dog API
 Images; source links and the upstream license are included alongside the images.
+Gramps has opted to use the existing profile photo in anonymous views as well;
+that preference is handled in `src/lib/anonymousNames.js`.
 
 Existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` values are still accepted for compatibility.
 
