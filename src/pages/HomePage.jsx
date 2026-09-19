@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Countdown from '../components/Countdown.jsx'
 import { usePlayer, useSettings } from '../App.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
@@ -196,6 +197,7 @@ export default function HomePage() {
     return (
       <main className="page">
         <p className="muted">Loading current round...</p>
+        <Link to="/how-to-play">How to play</Link>
       </main>
     )
   }
@@ -204,6 +206,7 @@ export default function HomePage() {
     const seasonHasStarted = context.currentWeekIndex >= 0
     return (
       <main className="page">
+        <p className="how-to-play-link"><Link to="/how-to-play">How to play</Link></p>
         <section className="hero-surface">
           <span className="phase-pill phase-off">No active round</span>
           <h1>{seasonHasStarted ? 'Queue needs a song theme' : 'Season starts soon'}</h1>
@@ -225,6 +228,7 @@ export default function HomePage() {
 
   return (
     <main className="page">
+      <p className="how-to-play-link"><Link to="/how-to-play">How to play</Link></p>
       <section className="hero-surface">
         <div className="hero-topline">
           <span className={`phase-pill phase-${context.phase}`}>{context.phaseMeta.label}</span>

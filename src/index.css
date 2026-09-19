@@ -305,6 +305,29 @@ code {
   font-size: clamp(2.2rem, 7vw, 4.3rem);
 }
 
+.how-to-play-link {
+  margin-bottom: 0.75rem;
+  text-align: right;
+}
+
+.how-to-play-page {
+  max-width: 760px;
+}
+
+.how-to-play-page .card {
+  display: grid;
+  gap: 0.75rem;
+  line-height: 1.6;
+}
+
+.how-to-play-page ul {
+  padding-left: 1.25rem;
+}
+
+.how-to-play-page li + li {
+  margin-top: 0.75rem;
+}
+
 .stack {
   display: grid;
   gap: 0.9rem;
