@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { groupLabel } from '../../lib/groups.js'
 import { addRoundPlaylist, deleteRoundPlaylist } from '../../lib/mutations.js'
-import { serviceLabelForUrl } from './homeUtils.js'
+import { serviceLabelForUrl } from '../../lib/songLinks.js'
 
 // Voting and appreciation pass the active side so its shared playlist can be curated in either phase.
 export default function PlaylistPanel({ playlists, roundId, side = null, showSides = false, onChanged }) {
