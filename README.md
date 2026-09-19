@@ -46,6 +46,17 @@ http://localhost:5173/?days=1   # one day ahead
 
 The override only works in Vite development mode; production ignores it. It changes the app's clock, not its database connection, so voting, commenting, and playlist controls still write to whichever Supabase project `.env.local` configures. Automatic side assignment is disabled while a day offset is active.
 
+## Tests
+
+```bash
+npm test
+npm run test:unit
+npm run test:integration
+```
+
+Tests use Node’s built-in runner with no additional dependencies or database access.
+See [Testing](docs/testing.md) for structure, fixtures, conventions, and focused commands.
+
 ## Build
 
 ```bash

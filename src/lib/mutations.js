@@ -1,8 +1,11 @@
 import { addDays, getCurrentMonday, normalizeTemplate } from './schedule.js'
 import { randomDogAvatarUrl } from './dogAvatars.js'
 import { supabase } from './supabase.js'
+import { SONG_SERVICES, songLinkError } from './songLinks.js'
 
 export async function saveSongSubmission({ roundId, playerId, form }) {
+  const linkError = songLinkError(form)
+  if (linkError) return { error: { message: linkError } }
   const { error } = await supabase
     .from('songs')
     .upsert({
@@ -12,6 +15,7 @@ export async function saveSongSubmission({ roundId, playerId, form }) {
       title: form.title.trim(),
       album: form.album.trim() || null,
       link: form.link.trim() || null,
+      ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field]?.trim() || null])),
       submitter_note: form.submitter_note.trim() || null,
     }, { onConflict: 'round_id,player_id' })
 

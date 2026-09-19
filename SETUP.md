@@ -10,6 +10,8 @@ Season 2 should use a fresh Supabase project. Keep the old Supabase project onli
 
 The schema source of truth is `supabase/migrations/`. The initial migration creates the Season 2 tables, storage bucket, realtime publication, and public RLS policies. Later migrations keep general round comments, duplicate merging, and round side splitting in sync.
 
+The optional per-service song links require `20260919120000_add_song_service_links.sql` before deploying the app changes. It adds Spotify, TIDAL, Apple Music, and YouTube Music URL columns to `songs`; the original `link` column remains available for existing submissions and other services. Each service button opens the supplied link when available and otherwise searches that service for the artist and song title. Copied song lists include supplied links only. No external lookup API is needed.
+
 Apply migrations before deploying app code that depends on them. Until `round_groups` exists the app reads an empty side list and runs every round as a single pool, so an un-migrated database degrades rather than breaking.
 
 The Supabase CLI is the alternative path: `npx supabase login`, then `npm run db:link -- --project-ref your-project-ref` and `npm run db:push`. It needs the database password as well as a token, which is why `db:deploy` exists.

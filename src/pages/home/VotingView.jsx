@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
+import SongLinks from '../../components/SongLinks.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
 import { anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
 import { votePointsByPlayer } from '../../lib/voteProgress.js'
 import CommentThread from './CommentThread.jsx'
-import { copyTextFor, indexCommentLikes, indexCommentsBySongId, searchUrl, serviceLabelForUrl } from './homeUtils.js'
+import { copyTextFor, indexCommentLikes, indexCommentsBySongId } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
 
 export default function VotingView({
@@ -184,7 +185,6 @@ export default function VotingView({
               const isOwn = !isViewingOther && song.player_id === player.id
               const songComments = commentsBySongId.get(song.id) || []
               const currentVote = draftVotes[song.id] || 0
-              const linkedService = serviceLabelForUrl(song.link)
               return (
                 <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote > 0 ? 'has-votes' : ''}`} key={song.id}>
                   <div className="voting-song-header">
@@ -195,13 +195,7 @@ export default function VotingView({
                       </div>
                     </div>
 
-                    <div className="song-actions song-service-actions voting-song-actions">
-                      {song.link && <a href={song.link} target="_blank" rel="noreferrer">{linkedService}</a>}
-                      {linkedService !== 'Spotify' && <a href={searchUrl('spotify', song)} target="_blank" rel="noreferrer">Spotify</a>}
-                      {linkedService !== 'TIDAL' && <a href={searchUrl('tidal', song)} target="_blank" rel="noreferrer">TIDAL</a>}
-                      {linkedService !== 'Apple Music' && <a href={searchUrl('apple', song)} target="_blank" rel="noreferrer">Apple Music</a>}
-                      {linkedService !== 'YouTube Music' && <a href={searchUrl('youtube-music', song)} target="_blank" rel="noreferrer">YouTube Music</a>}
-                    </div>
+                    <SongLinks song={song} className="voting-song-actions" />
 
                     {song.submitter_note && <p className="note">{song.submitter_note}</p>}
                   </div>

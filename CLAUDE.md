@@ -6,14 +6,19 @@ This repository is Big Dog Flips, a fork of Muzak Season 2: a Vite + React SPA b
 
 This is intentionally a toy project. Keep the workflow lightweight:
 
-- Never run tests, linting, type-checking, or other automated verification.
+- Run tests only when the user explicitly requests them. Follow `docs/testing.md` for test structure and conventions.
+- Never run linting, type-checking, or other automated verification unless explicitly requested.
 - Never run a production build to verify changes.
 - Never perform visual checking. Do not start the dev or preview server, use browser automation, or take screenshots to inspect the UI.
-- Make the requested changes and stop without testing, building, or visually reviewing them.
+- Make the requested changes and stop without building or visually reviewing them. When tests are requested, run the relevant tests and report the result.
 
 ## Commands
 
 - `npm install` — install dependencies
+- `npm test` — run all unit and integration tests (when requested)
+- `npm run test:unit` — run pure helper tests
+- `npm run test:integration` — run tests combining application helpers, without external services
+- `npm run test:watch` — rerun tests as files change (only when requested)
 - `npm run db:status` — list applied and pending migrations
 - `npm run db:plan` — dry run; reports pending migrations, changes nothing
 - `npm run db:deploy` — apply pending migrations

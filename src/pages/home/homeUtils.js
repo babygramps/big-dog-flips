@@ -1,3 +1,5 @@
+import { songLinksFor } from '../../lib/songLinks.js'
+
 export function phaseTitle(phase) {
   if (phase === 'submission') return 'Submit your song'
   if (phase === 'voting') return 'Vote on the songs'
@@ -43,40 +45,11 @@ export function commentsForEntry(comments, entry, commentsBySongId = null) {
   return comments.filter(comment => ids.has(comment.song_id))
 }
 
-export function serviceLabelForUrl(url = '') {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, '')
-    if (host.includes('spotify.com')) return 'Spotify'
-    if (host.includes('tidal.com')) return 'TIDAL'
-    if (host === 'music.youtube.com') return 'YouTube Music'
-    if (host.includes('youtube.com') || host.includes('youtu.be')) return 'YouTube'
-    if (host.includes('bandcamp.com')) return 'Bandcamp'
-    if (host.includes('soundcloud.com')) return 'SoundCloud'
-    if (host.includes('music.apple.com')) return 'Apple Music'
-  } catch {
-    return 'Listen'
-  }
-  return 'Listen'
-}
-
-function songQuery(song) {
-  return encodeURIComponent(`${song.artist || ''} ${song.title || ''}`.trim())
-}
-
-export function searchUrl(service, song) {
-  const query = songQuery(song)
-  if (service === 'spotify') return `https://open.spotify.com/search/${query}`
-  if (service === 'tidal') return `https://tidal.com/search?q=${query}`
-  if (service === 'apple') return `https://music.apple.com/us/search?term=${query}`
-  if (service === 'youtube-music') return `https://music.youtube.com/search?q=${query}`
-  return `https://www.youtube.com/results?search_query=${query}`
-}
-
 export function copyTextFor(items) {
   return items
     .map((song, index) => {
       const album = song.album ? ` (${song.album})` : ''
-      const link = song.link ? `\n   ${song.link}` : ''
+      const link = songLinksFor(song).map(({ label, url }) => `\n   ${label}: ${url}`).join('')
       return `${index + 1}. ${song.artist} - ${song.title}${album}${link}`
     })
     .join('\n')

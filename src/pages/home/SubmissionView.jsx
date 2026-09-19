@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import SideRoster from '../../components/SideRoster.jsx'
+import SongLinks from '../../components/SongLinks.jsx'
 import { groupLabel } from '../../lib/groups.js'
 import { saveSongSubmission } from '../../lib/mutations.js'
+import { SONG_SERVICES, songLinkError } from '../../lib/songLinks.js'
 
 function songFormValues(song) {
   return {
@@ -9,6 +11,7 @@ function songFormValues(song) {
     title: song?.title || '',
     album: song?.album || '',
     link: song?.link || '',
+    ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, song?.[field] || ''])),
     submitter_note: song?.submitter_note || '',
   }
 }
@@ -27,7 +30,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
     const nextSong = songFormValues(mySong)
     setSavedSong(nextSong)
     if (!editing) setForm(nextSong)
-  }, [mySong?.id, mySong?.artist, mySong?.title, mySong?.album, mySong?.link, mySong?.submitter_note])
+  }, [mySong?.id, mySong?.artist, mySong?.title, mySong?.album, mySong?.link, mySong?.spotify_url, mySong?.tidal_url, mySong?.apple_music_url, mySong?.youtube_music_url, mySong?.submitter_note])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -36,11 +39,19 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
       title: form.title.trim(),
       album: form.album.trim(),
       link: form.link.trim(),
+      ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field].trim()])),
       submitter_note: form.submitter_note.trim(),
     }
 
     if (!nextSong.artist || !nextSong.title) {
       setError('Artist and title are required.')
+      setSuccess('')
+      return
+    }
+
+    const linkError = songLinkError(nextSong)
+    if (linkError) {
+      setError(linkError)
       setSuccess('')
       return
     }
@@ -166,11 +177,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
                   <strong>{savedSong.artist}</strong>
                   {savedSong.album && <span> · {savedSong.album}</span>}
                 </p>
-                {savedSong.link && (
-                  <a href={savedSong.link} target="_blank" rel="noreferrer" className="submission-receipt-link">
-                    Open submitted link ↗
-                  </a>
-                )}
+                <SongLinks song={savedSong} />
               </div>
             </div>
 
@@ -209,15 +216,31 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
                   <input value={form.album} onChange={event => setForm(f => ({ ...f, album: event.target.value }))} />
                 </label>
                 <label>
-                  <span>Link</span>
+                  <span>Other link (optional)</span>
                   <input
                     type="url"
                     value={form.link}
-                    placeholder="Skip unless necessary"
+                    placeholder="YouTube, Bandcamp, SoundCloud, etc."
                     onChange={event => setForm(f => ({ ...f, link: event.target.value }))}
                   />
                 </label>
               </div>
+              <p className="muted">Song links are optional. Paste a song’s share link to open it directly. Leave a service blank and its button will search for your artist and song title instead.</p>
+              {[SONG_SERVICES.slice(0, 2), SONG_SERVICES.slice(2)].map((services, index) => (
+                <div className="form-row" key={index}>
+                  {services.map(({ field, label, placeholder }) => (
+                    <label key={field}>
+                      <span>{label}</span>
+                      <input
+                        type="url"
+                        value={form[field]}
+                        placeholder={placeholder}
+                        onChange={event => setForm(f => ({ ...f, [field]: event.target.value }))}
+                      />
+                    </label>
+                  ))}
+                </div>
+              ))}
               <label>
                 <span>Submitter note</span>
                 <textarea
