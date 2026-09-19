@@ -1,4 +1,5 @@
 import { addDays, getCurrentMonday, normalizeTemplate } from './schedule.js'
+import { randomDogAvatarUrl } from './dogAvatars.js'
 import { supabase } from './supabase.js'
 
 export async function saveSongSubmission({ roundId, playerId, form }) {
@@ -24,6 +25,7 @@ export async function createPlayer({ name, avatarColor }) {
       name,
       active: true,
       avatar_color: avatarColor,
+      avatar_url: randomDogAvatarUrl(),
     })
     .select()
     .single()

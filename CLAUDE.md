@@ -117,6 +117,8 @@ The schema source of truth is `supabase/migrations/`; `SETUP.md` documents how t
 
 ## Profile Pictures
 
+Every new player receives a randomly selected real dog photo during `createPlayer`, using `src/lib/dogAvatars.js`. Save the chosen path in `players.avatar_url` as part of the player insert so it stays the same across sessions and rounds. Returning players keep their saved photo.
+
 Profile pictures use the public Supabase Storage bucket `profile-pictures`. Uploads are resized in the browser before being stored at `players/<player-id>/avatar.webp`, and the resulting public URL is saved to `players.avatar_url`.
 
 Comment photos and the voting alias card must always use `players.avatar_url`, with the same default image as the profile when no photo is set. Do not assign separate anonymous photos or cycle them per round. A requested new dog photo should update the player's profile photo so it changes everywhere. Real, non-AI dog photographs are bundled in `public/anonymous-dogs/` with source credits.

@@ -18,6 +18,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Optional: add `VITE_GIPHY_API_KEY` to enable the GIF search picker in comments.
 
+New registrations automatically receive a random real dog photo, saved in
+`players.avatar_url` when the profile is created. Returning players keep their photo.
+
 Comment photos and the voting sidebar's comment alias always use the player's
 profile photo (`players.avatar_url`), including during anonymous voting. Only the
 display name changes to a per-round alias; photos have no separate round assignment.
