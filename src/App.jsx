@@ -4,6 +4,7 @@ import { fetchLeagueSettings, fetchStoredPlayer } from './lib/data.js'
 import { clearPlayer, getStoredPlayer, storePlayer } from './lib/identity.js'
 import {
   loadAdminPage,
+  loadHowToPlayPage,
   loadJoinScreen,
   loadPastRoundPage,
   loadPastSongsPage,
@@ -17,6 +18,7 @@ import HomePage from './pages/HomePage.jsx'
 import Nav from './components/Nav.jsx'
 
 const AdminPage = lazy(loadAdminPage)
+const HowToPlayPage = lazy(loadHowToPlayPage)
 const JoinScreen = lazy(loadJoinScreen)
 const PastRoundPage = lazy(loadPastRoundPage)
 const PastSongsPage = lazy(loadPastSongsPage)
@@ -193,6 +195,7 @@ export default function App() {
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/how-to-play" element={<HowToPlayPage />} />
               <Route path="/rounds" element={<RoundsPage />} />
               <Route path="/rounds/:roundId" element={<PastRoundPage />} />
               <Route path="/players" element={<PlayerListPage />} />

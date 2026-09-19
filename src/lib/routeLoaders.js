@@ -5,8 +5,10 @@ export const loadPlayerListPage = () => import('../pages/PlayerListPage.jsx')
 export const loadPlayerPage = () => import('../pages/PlayerPage.jsx')
 export const loadPastSongsPage = () => import('../pages/PastSongsPage.jsx')
 export const loadAdminPage = () => import('../pages/SettingsPage.jsx')
+export const loadHowToPlayPage = () => import('../pages/HowToPlayPage.jsx')
 
 const loadersByPath = {
+  '/how-to-play': loadHowToPlayPage,
   '/rounds': loadRoundsPage,
   '/players': loadPlayerListPage,
   '/songs': loadPastSongsPage,
