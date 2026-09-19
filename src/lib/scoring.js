@@ -362,9 +362,9 @@ export function buildFairScores({
   groupSongs = [],
   roundGroups = [],
   scoredRoundIds = new Set(),
-  pointsPerPlayer = 10,
+  pointsPerPlayer = 3,
 }) {
-  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const budget = Math.max(1, Number(pointsPerPlayer) || 3)
   const fairScores = {}
   const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })
 
@@ -431,9 +431,9 @@ export function buildGoldenEarScores({
   groupSongs = [],
   roundGroups = [],
   scoredRoundIds = new Set(),
-  pointsPerPlayer = 10,
+  pointsPerPlayer = 3,
 }) {
-  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const budget = Math.max(1, Number(pointsPerPlayer) || 3)
   const tallies = {}
   const epsilon = 1e-9
   const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })
@@ -557,9 +557,9 @@ export function buildAudienceScores({
   groupSongs = [],
   roundGroups = [],
   scoredRoundIds = new Set(),
-  pointsPerPlayer = 10,
+  pointsPerPlayer = 3,
 }) {
-  const budget = Math.max(1, Number(pointsPerPlayer) || 10)
+  const budget = Math.max(1, Number(pointsPerPlayer) || 3)
   const supportByPlayerId = new Map()
   const epsilon = 1e-9
   const roundIndex = scoringRoundIndex({ songs, votes, duplicateGroups, groupSongs, roundGroups })

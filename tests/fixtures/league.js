@@ -33,7 +33,7 @@ export function makeRound(overrides = {}) {
 }
 
 export function makeSettings(overrides = {}) {
-  return { schedule_start_date: '2026-09-14', points_per_player: 10, ...overrides }
+  return { schedule_start_date: '2026-09-14', points_per_player: 3, ...overrides }
 }
 
 export function makeDuplicateRound() {

@@ -87,7 +87,7 @@ export default function PlayerPage() {
     groupSongs: data.groupSongs,
     roundGroups: data.roundGroups,
     scoredRoundIds,
-    pointsPerPlayer: settings?.points_per_player || 10,
+    pointsPerPlayer: settings?.points_per_player || 3,
   }), [data.songs, data.votes, data.groups, data.groupSongs, data.roundGroups, scoredRoundIds, settings?.points_per_player])
   const awardsByPlayerId = useMemo(() => buildPlayerAwards({
     players: data.players,
@@ -99,7 +99,7 @@ export default function PlayerPage() {
     groupSongs: data.groupSongs,
     roundGroups: data.roundGroups,
     scoredRoundIds,
-    pointsPerPlayer: settings?.points_per_player || 10,
+    pointsPerPlayer: settings?.points_per_player || 3,
     leaderboard,
     fairScores,
     latestScoredRoundId,
@@ -397,7 +397,7 @@ export default function PlayerPage() {
 
       {isFairScoreModalOpen && (
         <FairScoreModal
-          pointsPerPlayer={settings?.points_per_player || 10}
+          pointsPerPlayer={settings?.points_per_player || 3}
           onClose={() => setIsFairScoreModalOpen(false)}
         />
       )}

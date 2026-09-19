@@ -21,7 +21,7 @@ export function votePointsByPlayer(votes = []) {
 
 export function voteProgressFor(pointsSpent, pointsTotal, { final = false } = {}) {
   const spent = Math.max(0, Number(pointsSpent) || 0)
-  const total = Math.max(1, Number(pointsTotal) || 10)
+  const total = Math.max(1, Number(pointsTotal) || 3)
 
   if (spent >= total) return VOTE_PROGRESS.COMPLETE
   if (spent > 0) return VOTE_PROGRESS.PARTIAL

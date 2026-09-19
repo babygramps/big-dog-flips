@@ -6,12 +6,12 @@ import { makeDuplicateRound, makeSong, makeVote } from '../fixtures/league.js'
 describe('song scoring', () => {
   it('discards self-votes while allowing another player to spend their whole bank on one song', () => {
     const songs = [makeSong()]
-    const votes = [makeVote({ points: 10 }), makeVote({ id: 'self', voter_player_id: 'player-a', points: 10 })]
+    const votes = [makeVote({ points: 3 }), makeVote({ id: 'self', voter_player_id: 'player-a', points: 3 })]
 
     const [entry] = buildSongEntries({ songs, votes })
 
-    assert.equal(entry.totalPoints, 10)
-    assert.equal(entry.ineligiblePoints, 10)
+    assert.equal(entry.totalPoints, 3)
+    assert.equal(entry.ineligiblePoints, 3)
   })
 
   it('removes all duplicate submitters’ votes and adds one courtesy point for two submitters', () => {

@@ -246,9 +246,9 @@ function buildPaceRows({
   songs = [],
   votes = [],
   scoredRoundIds = new Set(),
-  pointsPerPlayer = 10,
+  pointsPerPlayer = 3,
 }) {
-  const fullBallotPoints = Math.max(1, Number(pointsPerPlayer) || 10);
+  const fullBallotPoints = Math.max(1, Number(pointsPerPlayer) || 3);
   const paceByPlayerId = Object.fromEntries(
     players.map((player) => [
       player.id,
@@ -381,7 +381,7 @@ export function buildPlayerAwards({
   groupSongs = [],
   roundGroups = [],
   scoredRoundIds = new Set(),
-  pointsPerPlayer = 10,
+  pointsPerPlayer = 3,
   leaderboard = [],
   fairScores = {},
   latestScoredRoundId = null,

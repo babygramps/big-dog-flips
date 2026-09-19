@@ -5,7 +5,7 @@ export default function SideRoster({
   players = [],
   submittedIds,
   votePointsByPlayer,
-  pointsTotal = 10,
+  pointsTotal = 3,
   currentPlayerId,
   phase = 'submission',
 }) {

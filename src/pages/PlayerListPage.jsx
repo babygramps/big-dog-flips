@@ -42,7 +42,7 @@ export default function PlayerListPage() {
     groupSongs: data.groupSongs,
     roundGroups: data.roundGroups,
     scoredRoundIds,
-    pointsPerPlayer: settings?.points_per_player || 10,
+    pointsPerPlayer: settings?.points_per_player || 3,
   }), [data.songs, data.votes, data.groups, data.groupSongs, data.roundGroups, scoredRoundIds, settings?.points_per_player])
   const rankedPlayers = useMemo(() => {
     const leaderboardMap = Object.fromEntries(leaderboard.map(row => [row.id, row]))
@@ -75,7 +75,7 @@ export default function PlayerListPage() {
     groupSongs: data.groupSongs,
     roundGroups: data.roundGroups,
     scoredRoundIds,
-    pointsPerPlayer: settings?.points_per_player || 10,
+    pointsPerPlayer: settings?.points_per_player || 3,
     leaderboard,
     fairScores,
     latestScoredRoundId: latestScoredRound?.id || null,

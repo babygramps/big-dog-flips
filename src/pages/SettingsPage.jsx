@@ -34,7 +34,7 @@ export default function AdminPage() {
   const [form, setForm] = useState({
     league_name: settings?.league_name || 'Big Dog Flips',
     season_label: settings?.season_label || 'Season 2',
-    points_per_player: settings?.points_per_player || 10,
+    points_per_player: settings?.points_per_player || 3,
     schedule_start_date: settings?.schedule_start_date || getCurrentMonday(),
     weekly_phase_template: normalizeTemplate(settings?.weekly_phase_template || DEFAULT_WEEKLY_TEMPLATE),
   })
@@ -45,7 +45,7 @@ export default function AdminPage() {
     setForm({
       league_name: settings.league_name || 'Big Dog Flips',
       season_label: settings.season_label || 'Season 2',
-      points_per_player: settings.points_per_player || 10,
+      points_per_player: settings.points_per_player || 3,
       schedule_start_date: settings.schedule_start_date || getCurrentMonday(),
       weekly_phase_template: normalizeTemplate(settings.weekly_phase_template),
     })

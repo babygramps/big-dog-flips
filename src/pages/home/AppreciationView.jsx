@@ -7,7 +7,7 @@ import AppreciationSongCard from './AppreciationSongCard.jsx'
 import { indexCommentLikes, indexCommentsBySongId } from './homeUtils.js'
 import PlaylistPanel from './PlaylistPanel.jsx'
 
-export default function AppreciationView({ round, player, songs, votes, comments, commentLikes, duplicateGroups, groupSongs, playlists = [], allPlayers = [], pointsTotal = 10, sides, onChanged }) {
+export default function AppreciationView({ round, player, songs, votes, comments, commentLikes, duplicateGroups, groupSongs, playlists = [], allPlayers = [], pointsTotal = 3, sides, onChanged }) {
   const entries = useMemo(() => buildSongEntries({
     songs,
     votes,
