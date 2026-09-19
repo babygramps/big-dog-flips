@@ -15,8 +15,11 @@ node --test tests/unit/songLinks.test.js
 node --test --test-name-pattern="canonical links" tests/integration/songResults.test.js
 ```
 
-Agents run tests when explicitly requested, per `CLAUDE.md`. Tests do not authorize
-builds, dev servers, browser automation, or database migrations.
+Before every commit, agents must run `npm test` and then `npm run build`, per
+`CLAUDE.md`. Both must pass on the final changes being committed, including
+documentation-only changes. Fix any failures and rerun both commands after further
+edits; do not commit while either check fails. No extra user request is needed.
+These checks do not authorize dev servers, browser automation, or database migrations.
 
 ## Layout
 
