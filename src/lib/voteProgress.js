@@ -10,7 +10,7 @@ export function votePointsByPlayer(votes = []) {
 
   votes.forEach(vote => {
     const playerId = vote.voter_player_id
-    const points = Number(vote.points)
+    const points = Math.abs(Number(vote.points))
     if (!playerId || !Number.isFinite(points) || points <= 0) return
 
     pointsByPlayer.set(playerId, (pointsByPlayer.get(playerId) || 0) + points)

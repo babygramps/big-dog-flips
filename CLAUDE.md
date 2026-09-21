@@ -75,7 +75,7 @@ A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two si
 
 ## Voting
 
-- Each player spends `league_settings.points_per_player` points per round, default 3. There is no per-song cap; the whole bank can go on one song.
+- Each player gets `league_settings.points_per_player` votes per round, default 3. All three may be upvotes, or one may be a downvote worth -1 point. Upvotes and downvotes share the same total allowance, with at most one downvote per player. Upvotes may be stacked on one song; a song cannot receive both kinds from the same player. The opposite arrow undoes an existing vote. Ballot progress counts absolute points spent.
 - Players cannot score their own song. The UI omits the controls, and `src/lib/scoring.js` also discards self-votes at scoring time, so a stray row can never inflate a total.
 - Songs are anonymous during voting. Comment names use a per-round alias from `src/lib/anonymousNames.js`; comment photos always match the author's profile photo. Appreciation reveals song submitters and comment names.
 - Each player sees the songs in their own order (`src/lib/listeningOrder.js`) so submission order does not bias results. Both the alias and the order are derived by hashing round plus player, so they are stable without being stored.

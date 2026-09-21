@@ -114,7 +114,7 @@ export default function AdminPage() {
 
               <div className="form-row">
                 <label>
-                  <span>Points per player</span>
+                  <span>Votes per player (at most one downvote)</span>
                   <input
                     type="number"
                     min="1"

@@ -24,8 +24,8 @@ export default function HowToPlayPage() {
 
         <section className="card">
           <h2>2. Listen and vote</h2>
-          <p>Listen to the songs in your side of the round. Give out all {points} {points === 1 ? 'point' : 'points'} using the vote controls.</p>
-          <p>Split your points between songs or give them all to one. You cannot vote for your own song.</p>
+          <p>Listen to the songs in your side of the round. Cast up to {points} {points === 1 ? 'vote' : 'votes'} using the vote controls.</p>
+          <p>Use all your votes as upvotes, split between songs or stacked on one. You may use one vote as a downvote instead, subtracting one point. You cannot vote for your own song.</p>
           <p>Votes save automatically. You can change them until voting closes.</p>
         </section>
 

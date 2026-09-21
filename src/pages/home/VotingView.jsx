@@ -58,6 +58,8 @@ export default function VotingView({
     adjustVote,
     draftVotes,
     pointsRemaining,
+    upRemaining,
+    downRemaining,
     pointsUsed,
     savingVotes,
     voteError,
@@ -93,6 +95,7 @@ export default function VotingView({
             <strong>{pointsRemaining} left</strong>
           </div>
           <VoteTokenBank total={pointsTotal} used={pointsUsed} />
+          <p className="muted">Use all {pointsTotal} votes as upvotes, or use one as a downvote worth −1 point. Use the opposite arrow to undo a vote.</p>
         </div>
         {savingVotes && <p className="muted">Saving votes...</p>}
         {voteError && <p className="error-msg">{voteError}</p>}
@@ -186,7 +189,7 @@ export default function VotingView({
               const songComments = commentsBySongId.get(song.id) || []
               const currentVote = draftVotes[song.id] || 0
               return (
-                <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote > 0 ? 'has-votes' : ''}`} key={song.id}>
+                <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote !== 0 ? 'has-votes' : ''}`} key={song.id}>
                   <div className="voting-song-header">
                     <div className="song-card-main">
                       <div>
@@ -218,17 +221,17 @@ export default function VotingView({
                       <button
                         type="button"
                         className="icon-btn primary"
-                        aria-label={`Add a vote for ${song.title}`}
+                        aria-label={`${currentVote < 0 ? "Undo downvote" : "Upvote"} for ${song.title}`}
                         onClick={() => isOwn ? setSelfVoteSong(song) : adjustVote(song, 1)}
-                        disabled={!isOwn && pointsRemaining <= 0}
+                        disabled={!isOwn && currentVote >= 0 && upRemaining <= 0}
                       >↑</button>
                       <strong className="vote-count-pop" key={`${song.id}-${currentVote}`}>{currentVote}</strong>
                       <button
                         type="button"
                         className="icon-btn"
-                        aria-label={`Remove a vote for ${song.title}`}
+                        aria-label={`${currentVote > 0 ? "Remove upvote" : "Downvote"} for ${song.title}`}
                         onClick={() => isOwn ? setSelfVoteSong(song) : adjustVote(song, -1)}
-                        disabled={!isOwn && (draftVotes[song.id] || 0) <= 0}
+                        disabled={!isOwn && (currentVote < 0 || (currentVote === 0 && downRemaining <= 0))}
                       >↓</button>
                     </div>
                   )}
@@ -256,7 +259,7 @@ function VoteTokenBank({ total, used }) {
   const tokenCount = Math.max(0, Number(total) || 0)
   const spentCount = Math.min(tokenCount, Math.max(0, Number(used) || 0))
   return (
-    <div className={`token-bank ${spentCount >= tokenCount ? 'bank-locked' : ''}`} aria-label={`${tokenCount - spentCount} voting points remaining`}>
+    <div className={`token-bank ${spentCount >= tokenCount ? 'bank-locked' : ''}`} aria-label={`${tokenCount - spentCount} votes remaining`}>
       {Array.from({ length: tokenCount }).map((_, index) => (
         <span className={`point-token ${index < spentCount ? 'spent' : ''}`} key={index} />
       ))}

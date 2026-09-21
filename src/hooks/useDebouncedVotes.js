@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { persistVote } from '../lib/mutations.js'
 
+import { adjustedVote, ballotBudget } from '../lib/ballot.js'
+
 const SAVE_DELAY_MS = 350
 
 export default function useDebouncedVotes({ roundId, playerId, votes, pointsTotal, onChanged }) {
@@ -31,7 +33,7 @@ export default function useDebouncedVotes({ roundId, playerId, votes, pointsTota
     })
   }, [roundId, playerId])
 
-  const pointsUsed = Object.values(draftVotes).reduce((sum, value) => sum + (Number(value) || 0), 0)
+  const { pointsUsed, upRemaining, downRemaining } = ballotBudget(draftVotes, pointsTotal)
   const pointsRemaining = pointsTotal - pointsUsed
   const hasPendingVotes = Object.keys(voteSaveTimersRef.current).length > 0
 
@@ -65,10 +67,7 @@ export default function useDebouncedVotes({ roundId, playerId, votes, pointsTota
 
     const currentDraft = draftVotesRef.current
     const current = Number(currentDraft[song.id]) || 0
-    const usedElsewhere = Object.entries(currentDraft)
-      .filter(([songId]) => songId !== song.id)
-      .reduce((sum, [, points]) => sum + (Number(points) || 0), 0)
-    const next = Math.max(0, Math.min(current + delta, pointsTotal - usedElsewhere))
+    const next = adjustedVote(currentDraft, song.id, delta, pointsTotal)
     if (next === current) return
 
     const nextDraft = { ...currentDraft }
@@ -85,6 +84,8 @@ export default function useDebouncedVotes({ roundId, playerId, votes, pointsTota
     draftVotes,
     hasPendingVotes,
     pointsRemaining,
+    upRemaining,
+    downRemaining,
     pointsUsed,
     savingVotes,
     voteError,

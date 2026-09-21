@@ -115,3 +115,5 @@ Default schedule:
 - Sunday: appreciation
 
 Phases change at midnight Pacific time.
+
+`20260921120000_allow_downvotes.sql` allows -1 vote rows. Apply this migration before deploying the voting UI that allows an optional downvote within the three-vote allowance. Existing ballots are preserved.

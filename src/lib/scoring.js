@@ -226,7 +226,7 @@ export function buildLeaderboard({ players = [], rounds = [], songs = [], votes 
   }
 
   return Object.values(tally)
-    .filter(player => player.total > 0 || activePlayerIds.has(player.id))
+    .filter(player => Object.keys(player.byRound).length > 0 || activePlayerIds.has(player.id))
     .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
     .map(player => ({
       ...player,
