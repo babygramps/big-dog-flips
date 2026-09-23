@@ -3668,3 +3668,9 @@ select:focus {
   content-visibility: auto;
   contain-intrinsic-size: auto 460px;
 }
+.song-lookup { display: grid; gap: .65rem; margin: 1rem 0 1.5rem; }
+.song-lookup label { font-weight: 650; }
+.song-lookup-row { display: flex; gap: .65rem; flex-wrap: wrap; }
+.song-lookup-row input { flex: 1 1 17rem; min-width: 0; }
+.song-lookup-result { padding: 1rem; border: 1px solid currentColor; border-radius: .75rem; }
+.song-lookup-result p { margin: 0 0 .6rem; }
