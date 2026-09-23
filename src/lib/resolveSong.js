@@ -60,6 +60,12 @@ async function providerMetadata(url, field, parsed, fetcher) {
   const response = await fetcher(url, { signal: AbortSignal.timeout(8000), redirect: 'error' })
   if (!response.ok) throw error('The music service could not open that song.', 404)
   const html = await response.text()
+  if (field === 'tidal_url') {
+    const description = meta(html, 'description')
+    const match = description.match(/^Listen to (.+), a track by (.+) from the album (.+) on TIDAL$/)
+    if (!match) throw error('Could not identify this TIDAL track. Enter its details manually.', 404)
+    return { title: match[1], artist: match[2], album: match[3] }
+  }
   const title = meta(html, 'og:title')
   const description = meta(html, 'og:description').split(' · ')
   const artist = meta(html, 'music:musician_description') || meta(html, 'music:musician') || description[0]
