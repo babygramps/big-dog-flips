@@ -33,6 +33,17 @@ it('uses a YouTube Music video title and channel but never invents other direct 
   assert.deepEqual(result, { artist: 'Artist', title: 'A Song', album: '', links: { youtube_music_url: input } })
 })
 
+it('reads TIDAL artist, title, and album from its track description', async () => {
+  const url = 'https://tidal.com/track/492379038'
+  const fetcher = async target => String(target).includes('/search?') ? json({ results: [] }) : {
+    ok: true,
+    text: async () => '<meta name="description" content="Listen to Never Gonna Give You Up (Pianoforte), a track by Rick Astley from the album The Best of Me on TIDAL"><meta property="og:title" content="Rick Astley - Never Gonna Give You Up (Pianoforte)"><meta property="music:musician" content="https://tidal.com/artist/1798">',
+  }
+  assert.deepEqual(await resolveSong(url, { fetcher, token: '' }), {
+    title: 'Never Gonna Give You Up (Pianoforte)', artist: 'Rick Astley', album: 'The Best of Me', links: { tidal_url: url },
+  })
+})
+
 it('rejects unsafe hosts before making any outbound request', async () => {
   await assert.rejects(() => resolveSong('https://music.youtube.com.evil.example/watch?v=123', { fetcher: () => { throw Error('should not fetch') }, token: '' }), /Use a Spotify/)
 })
