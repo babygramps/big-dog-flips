@@ -61,6 +61,9 @@ function hashString(value) {
   return hash >>> 0
 }
 
+// Every commenter shares this photo while voting keeps names hidden.
+export const ANONYMOUS_COMMENT_AVATAR_URL = '/anonymous-commenter.webp'
+
 export function anonymousNameFor(roundId, playerId) {
   const hash = hashString(`muzak-anon-v1:${roundId || 'round'}:${playerId || 'player'}`)
   const adjective = ADJECTIVES[hash % ADJECTIVES.length]

@@ -3,7 +3,7 @@ import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
-import { anonymousNameFor } from '../../lib/anonymousNames.js'
+import { ANONYMOUS_COMMENT_AVATAR_URL, anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
 import { listeningOrderFor } from '../../lib/listeningOrder.js'
 import { votePointsByPlayer } from '../../lib/voteProgress.js'
@@ -274,7 +274,7 @@ function AnonymousPersonaCard({ name, roundId, player }) {
         player={{
           id: `anon-${roundId}-${player.id}`,
           name,
-          avatar_url: player.avatar_url,
+          avatar_url: ANONYMOUS_COMMENT_AVATAR_URL,
         }}
         size="sm"
         linkToProfile={false}
