@@ -89,6 +89,12 @@ describe('song link validation', () => {
     ['apple_music_url', 'https://music.apple.com/us/song/test-song/123'],
     ['apple_music_url', 'https://music.apple.com/us/song/123'],
     ['youtube_music_url', 'https://music.youtube.com/watch?v=abc123&si=share'],
+    ['spotify_url', 'https://spotify.app.link/sharedTrack'],
+    ['spotify_url', 'https://open.spotify.com/embed/track/abc123'],
+    ['tidal_url', 'https://tidal.com/track/123/u'],
+    ['tidal_url', 'https://listen.tidal.com/album/99/track/123'],
+    ['apple_music_url', 'https://music.apple.com/album/test/99?i=123'],
+    ['youtube_music_url', 'https://music.youtube.com/watch?v=abc_12-3&list=RDAMVMabc'],
   ]) {
     it(`accepts a supported share URL: ${url}`, () => {
       assert.equal(songLinkError(makeSong({ [field]: url })), '')
@@ -105,6 +111,39 @@ describe('song link validation', () => {
   ]) {
     it(`rejects a non-track or wrong-host URL: ${url}`, () => {
       assert.ok(songLinkError(makeSong({ [field]: url })).includes(label))
+    })
+  }
+
+  const spotifyHint = 'In Spotify, open the song, tap ⋯, then Share → Copy Song Link.'
+  const appleHint = 'In Apple Music, press and hold the song itself, then share it and copy the link.'
+  for (const [name, song, message] of [
+    ['an album link', { spotify_url: 'https://open.spotify.com/album/2qEqDJ2abc?si=x' }, `The Spotify link goes to an album, not a song. ${spotifyHint}`],
+    ['a playlist link', { spotify_url: 'https://open.spotify.com/playlist/37i9dQ' }, `The Spotify link goes to a playlist, not a song. ${spotifyHint}`],
+    ['an artist link', { spotify_url: 'https://open.spotify.com/intl-fr/artist/abc' }, `The Spotify link goes to an artist page, not a song. ${spotifyHint}`],
+    ['a podcast episode', { spotify_url: 'https://open.spotify.com/episode/abc' }, `The Spotify link goes to a podcast episode, not a song. ${spotifyHint}`],
+    ['the Spotify home page', { spotify_url: 'https://open.spotify.com/' }, `The Spotify link doesn’t go to a song. ${spotifyHint}`],
+    ['a Spotify URI', { spotify_url: 'spotify:track:abc123' }, 'That’s a Spotify URI, which only opens in the app. In Spotify, use Share → Copy Song Link instead.'],
+    ['a track link missing its ID', { spotify_url: 'https://open.spotify.com/track/' }, 'The Spotify link looks cut off. Copy it again from Spotify and paste the whole thing.'],
+    ['an Apple album link without a song', { apple_music_url: 'https://music.apple.com/us/album/test/123' }, `The Apple Music link goes to an album, not a song. ${appleHint}`],
+    ['an Apple album link with a broken song ID', { apple_music_url: 'https://music.apple.com/us/album/test/123?i=' }, 'The Apple Music link looks cut off. Copy it again from Apple Music and paste the whole thing.'],
+    ['an Apple radio station', { apple_music_url: 'https://music.apple.com/us/station/test/ra.123' }, `The Apple Music link goes to a radio station, not a song. ${appleHint}`],
+    ['a TIDAL album link', { tidal_url: 'https://tidal.com/browse/album/123' }, 'The TIDAL link goes to an album, not a song. In TIDAL, open the song, tap ⋯, then Share → Copy link.'],
+    ['a YouTube Music album', { youtube_music_url: 'https://music.youtube.com/browse/MPREb_abc' }, 'The YouTube Music link goes to an album, not a song. In YouTube Music, open the song, tap Share, then Copy link.'],
+    ['a YouTube Music playlist', { youtube_music_url: 'https://music.youtube.com/playlist?list=abc' }, 'The YouTube Music link goes to a playlist, not a song. In YouTube Music, open the song, tap Share, then Copy link.'],
+    ['a YouTube Music watch link without a video', { youtube_music_url: 'https://music.youtube.com/watch' }, 'The YouTube Music link looks cut off. Copy it again from YouTube Music and paste the whole thing.'],
+    ['a regular YouTube link', { youtube_music_url: 'https://youtu.be/abc123' }, 'That’s a regular YouTube link. Use a music.youtube.com link, or move it to Other link.'],
+    ['another service’s link', { spotify_url: 'https://music.apple.com/us/song/test/123' }, 'The Spotify field has an Apple Music link. Move it to the Apple Music field.'],
+    ['a non-standard service', { tidal_url: 'https://artist.bandcamp.com/track/test' }, 'The TIDAL field has a Bandcamp link. Move it to Other link.'],
+    ['an unknown site', { spotify_url: 'https://open.spotify.com.evil.example/track/abc' }, 'The Spotify field needs a Spotify link, like open.spotify.com/track/…'],
+    ['a link without https://', { spotify_url: 'open.spotify.com/track/abc123' }, 'The Spotify field needs a link that starts with https://.'],
+    ['share text around the link', { apple_music_url: 'Listen on Apple Music https://music.apple.com/us/song/test/123' }, 'The Apple Music field has extra text around the link. Paste only the link itself.'],
+    ['two links pasted together', { spotify_url: 'https://open.spotify.com/track/abchttps://open.spotify.com/track/abc' }, 'The Spotify field has more than one link in it. Paste just one.'],
+    ['a song name instead of a link', { spotify_url: 'Guillotine' }, 'The Spotify field doesn’t contain a link. Paste the song’s share link, or leave it blank.'],
+    ['an other link without https://', { link: 'artist.bandcamp.com/track/test' }, 'The Other link field needs a link that starts with https://.'],
+    ['an other link with text around it', { link: 'check this https://artist.bandcamp.com/track/test' }, 'The Other link field has extra text around the link. Paste only the link itself.'],
+  ]) {
+    it(`explains ${name}`, () => {
+      assert.equal(songLinkError(makeSong(song)), message)
     })
   }
 

@@ -199,7 +199,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
               {savedSong && <span className="soft-tag">Editing</span>}
             </div>
 
-            <form className="stack submission-form" onSubmit={handleSubmit} aria-busy={saving}>
+            <form className="stack submission-form" onSubmit={handleSubmit} aria-busy={saving} noValidate>
               <div className="form-row">
                 <label>
                   <span>Artist</span>
