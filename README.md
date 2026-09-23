@@ -22,7 +22,7 @@ New registrations automatically receive a random real dog photo, saved in
 `players.avatar_url` when the profile is created. Returning players keep their photo.
 
 During voting, every comment and the voting sidebar's comment alias show the same
-detective dog image (`public/anonymous-commenter.webp`) next to a per-round alias, so
+McGruff image (`public/anonymous-commenter-v2.webp`) next to a per-round alias, so
 neither names nor photos give authors away. From appreciation onward, comments show
 each author's name and profile photo (`players.avatar_url`).
 Real dog photographs are bundled in `public/anonymous-dogs/` for profile photo
