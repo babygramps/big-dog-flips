@@ -18,6 +18,18 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Optional: add `VITE_GIPHY_API_KEY` to enable the GIF search picker in comments.
 
+Song submissions can look up artist and title from a Spotify, Apple Music, TIDAL,
+YouTube Music, or YouTube track link. The lookup runs at `/api/resolve-song` on
+Vercel (and through the Vite dev server locally). It keeps the submitted track
+link and attempts an exact Apple Music catalog match when the artist, title,
+and available album identify a single recording. Other missing services retain
+their search buttons. Users confirm the suggested metadata before saving.
+
+Optional: set `MUSICFETCH_TOKEN` as a **server environment variable** to request
+direct Spotify, TIDAL, Apple Music, and YouTube Music matches from Musicfetch.
+This is a paid service; do not prefix the token with `VITE_` or expose it to
+the browser. Without it, lookup and the Apple catalog match still work.
+
 New registrations automatically receive a random real dog photo, saved in
 `players.avatar_url` when the profile is created. Returning players keep their photo.
 
