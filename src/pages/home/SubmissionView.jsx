@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SideRoster from '../../components/SideRoster.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
 import { groupLabel } from '../../lib/groups.js'
@@ -24,6 +24,45 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [lookupUrl, setLookupUrl] = useState('')
+  const [lookup, setLookup] = useState(null)
+  const [lookupError, setLookupError] = useState('')
+  const [lookingUp, setLookingUp] = useState(false)
+  const lookupRequest = useRef(0)
+
+  async function findSong(event) {
+    event.preventDefault()
+    const requestId = ++lookupRequest.current
+    setLookingUp(true)
+    setLookup(null)
+    setLookupError('')
+    try {
+      const response = await fetch('/api/resolve-song', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: lookupUrl.trim() }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not look up that song.')
+      if (requestId === lookupRequest.current) setLookup(result)
+    } catch (reason) {
+      if (requestId === lookupRequest.current) setLookupError(reason.message || 'Could not look up that song. Enter it manually.')
+    } finally {
+      if (requestId === lookupRequest.current) setLookingUp(false)
+    }
+  }
+
+  function useLookup() {
+    setForm(current => ({
+      ...current,
+      artist: lookup.artist,
+      title: lookup.title,
+      album: lookup.album || current.album,
+      ...Object.fromEntries(Object.entries(lookup.links).filter(([key, value]) => value && !current[key])),
+    }))
+    setLookup(null)
+    setLookupError('')
+  }
 
   useEffect(() => {
     if (!mySong) return
@@ -198,6 +237,22 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
               <h2>{savedSong ? 'Edit your submission' : 'Lock in a song'}</h2>
               {savedSong && <span className="soft-tag">Editing</span>}
             </div>
+
+            <form className="song-lookup" onSubmit={findSong}>
+              <label htmlFor="song-lookup-url">Paste a song link to fill in the details</label>
+              <div className="song-lookup-row">
+                <input id="song-lookup-url" type="url" value={lookupUrl} onChange={event => { ++lookupRequest.current; setLookingUp(false); setLookupUrl(event.target.value); setLookup(null); setLookupError('') }} placeholder="Spotify, YouTube Music, Apple Music, or TIDAL" required />
+                <button type="submit" className="btn btn-secondary" disabled={lookingUp || saving}>{lookingUp ? 'Finding…' : 'Find song'}</button>
+              </div>
+              {lookupError && <p className="submission-feedback is-error" role="alert">{lookupError}</p>}
+              {lookup && (
+                <div className="song-lookup-result" role="status">
+                  <p><strong>{lookup.title}</strong> · {lookup.artist}{lookup.album && ` · ${lookup.album}`}</p>
+                  <p className="muted">Found {Object.keys(lookup.links).filter(key => key !== 'link').length} direct service link(s). Check the version and edit any details below.</p>
+                  <button type="button" className="btn btn-secondary" onClick={useLookup}>Use this song</button>
+                </div>
+              )}
+            </form>
 
             <form className="stack submission-form" onSubmit={handleSubmit} aria-busy={saving} noValidate>
               <div className="form-row">
