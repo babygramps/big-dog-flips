@@ -48,6 +48,11 @@ function serviceFieldFor(url) {
   return null
 }
 
+export function serviceFieldForUrl(value) {
+  const url = webUrl(value)
+  return url ? serviceFieldFor(url) : null
+}
+
 // Classify a service URL as { kind: 'track' }, { kind: 'track', cutOff: true }
 // when the song ID is missing, or { kind: 'an album' } etc. for pages that
 // aren't a single song. A missing kind means an unrecognised page.
