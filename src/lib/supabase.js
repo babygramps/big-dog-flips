@@ -25,7 +25,7 @@ export const supabase = createClient(
 //
 // Tables:
 // - players(id, name, active, avatar_url, avatar_color, created_at, updated_at)
-// - league_settings(id, league_name, season_label, points_per_player,
+// - league_settings(id, league_name, season_label, points_per_player, b_sides_enabled,
 //   weekly_phase_template, schedule_start_date, timezone, created_at, updated_at)
 // - rounds(id, theme_name, theme_description, queue_position,
 //   submitted_by_player_id, week_start_date, is_archived, created_at, updated_at)

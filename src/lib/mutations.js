@@ -196,6 +196,7 @@ export async function saveLeagueSettings({ form, rounds }) {
     league_name: form.league_name.trim() || 'Big Dog Flips',
     season_label: form.season_label.trim() || 'Season 2',
     points_per_player: Math.max(1, Number(form.points_per_player) || 3),
+    b_sides_enabled: form.b_sides_enabled === true,
     schedule_start_date: form.schedule_start_date || getCurrentMonday(),
     weekly_phase_template: normalizeTemplate(form.weekly_phase_template),
     timezone: 'America/Los_Angeles',

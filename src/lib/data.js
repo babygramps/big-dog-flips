@@ -3,7 +3,7 @@ import { supabase } from './supabase.js'
 
 const PLAYER_EMBED_FIELDS = 'id, name, avatar_url, avatar_color'
 const PLAYER_FIELDS = `${PLAYER_EMBED_FIELDS}, active, created_at`
-const SETTINGS_FIELDS = 'id, league_name, season_label, points_per_player, weekly_phase_template, schedule_start_date, timezone'
+const SETTINGS_FIELDS = 'id, league_name, season_label, points_per_player, b_sides_enabled, weekly_phase_template, schedule_start_date, timezone'
 const ROUND_FIELDS = 'id, theme_name, theme_description, queue_position, submitted_by_player_id, week_start_date, is_archived, created_at'
 const ROUND_WITH_PLAYER = `${ROUND_FIELDS}, players(${PLAYER_EMBED_FIELDS})`
 const SONG_FIELDS = 'id, round_id, player_id, artist, title, album, link, spotify_url, tidal_url, apple_music_url, youtube_music_url, submitter_note, created_at'

@@ -99,7 +99,7 @@ export default function HomePage() {
     if (dayOffset !== 0 || loading || !currentRound) return
 
     const roundId = currentRound.id
-    const needsAssignment = !sides.isSplit && shouldSplitRound(activePlayers.length)
+    const needsAssignment = !sides.isSplit && shouldSplitRound(activePlayers.length, settings?.b_sides_enabled)
     const needsJoin = sides.isSplit && mySide === null
     if (!needsAssignment && !needsJoin) return
 
@@ -114,6 +114,7 @@ export default function HomePage() {
         const assignments = buildRoundGroupAssignment({
           roundId,
           activePlayers,
+          bSidesEnabled: settings?.b_sides_enabled,
           priorGroupRows: data.roundGroups.filter(row => row.round_id !== roundId),
         })
         if (!assignments) return
@@ -130,7 +131,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [dayOffset, loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reloadCore])
+  }, [dayOffset, loading, currentRound, sides.isSplit, mySide, activePlayers, data.roundGroups, player.id, reloadCore, settings?.b_sides_enabled])
 
   const roundData = useMemo(() => {
     if (!currentRound) return null

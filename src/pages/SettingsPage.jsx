@@ -9,6 +9,7 @@ import {
   fetchAdminSummaryData,
 } from '../lib/data.js'
 import { saveLeagueSettings } from '../lib/mutations.js'
+import { MIN_PLAYERS_TO_SPLIT } from '../lib/groups.js'
 import {
   DEFAULT_WEEKLY_TEMPLATE,
   getCurrentMonday,
@@ -35,6 +36,7 @@ export default function AdminPage() {
     league_name: settings?.league_name || 'Big Dog Flips',
     season_label: settings?.season_label || 'Season 2',
     points_per_player: settings?.points_per_player || 3,
+    b_sides_enabled: settings?.b_sides_enabled === true,
     schedule_start_date: settings?.schedule_start_date || getCurrentMonday(),
     weekly_phase_template: normalizeTemplate(settings?.weekly_phase_template || DEFAULT_WEEKLY_TEMPLATE),
   })
@@ -46,6 +48,7 @@ export default function AdminPage() {
       league_name: settings.league_name || 'Big Dog Flips',
       season_label: settings.season_label || 'Season 2',
       points_per_player: settings.points_per_player || 3,
+      b_sides_enabled: settings.b_sides_enabled === true,
       schedule_start_date: settings.schedule_start_date || getCurrentMonday(),
       weekly_phase_template: normalizeTemplate(settings.weekly_phase_template),
     })
@@ -132,6 +135,21 @@ export default function AdminPage() {
                   />
                 </label>
               </div>
+
+              <label>
+                <span>Round sides</span>
+                <select
+                  value={form.b_sides_enabled ? 'two' : 'one'}
+                  onChange={event => setForm(f => ({ ...f, b_sides_enabled: event.target.value === 'two' }))}
+                  aria-describedby="round-sides-help"
+                >
+                  <option value="one">Side A only</option>
+                  <option value="two">Enable Side B</option>
+                </select>
+              </label>
+              <p id="round-sides-help" className="muted">
+                Side A only keeps everyone in one voting pool. Enabling Side B splits rounds with at least {MIN_PLAYERS_TO_SPLIT} active players into two balanced sides. Rounds already split keep their sides.
+              </p>
 
               <ScheduleEditor
                 template={form.weekly_phase_template}

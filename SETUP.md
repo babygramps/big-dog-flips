@@ -12,6 +12,8 @@ The schema source of truth is `supabase/migrations/`. The initial migration crea
 
 `20260919130000_set_three_points_per_player.sql` sets the league allowance and database default to 3 points per player per round. Existing votes are preserved.
 
+`20260930120000_add_b_sides_setting.sql` adds the Admin round-sides option. Apply it before deploying this setting. Side A only is the default; enabling Side B splits rounds with at least 10 active players using the existing balanced assignment. Existing split rounds and late joiners keep using their recorded sides, even if Side B is later disabled.
+
 The optional per-service song links require `20260919120000_add_song_service_links.sql` before deploying the app changes. It adds Spotify, TIDAL, Apple Music, and YouTube Music URL columns to `songs`; the original `link` column remains available for existing submissions and other services. Each service button opens the supplied link when available and otherwise searches that service for the artist and song title. Copied song lists include supplied links only. No external lookup API is needed.
 
 Apply migrations before deploying app code that depends on them. Until `round_groups` exists the app reads an empty side list and runs every round as a single pool, so an un-migrated database degrades rather than breaking.

@@ -43,8 +43,8 @@ function binomial(n, k) {
   return Math.round(result)
 }
 
-export function shouldSplitRound(activePlayerCount) {
-  return activePlayerCount >= MIN_PLAYERS_TO_SPLIT
+export function shouldSplitRound(activePlayerCount, bSidesEnabled = false) {
+  return bSidesEnabled === true && activePlayerCount >= MIN_PLAYERS_TO_SPLIT
 }
 
 export function sidesForRound(roundGroups = [], roundId) {
@@ -209,10 +209,10 @@ function bestPartitionLocalSearch(n, sizeA, counts, random) {
   return bestCombo || []
 }
 
-export function buildRoundGroupAssignment({ roundId, activePlayers = [], priorGroupRows = [] }) {
+export function buildRoundGroupAssignment({ roundId, activePlayers = [], priorGroupRows = [], bSidesEnabled = false }) {
   const playerIds = activePlayers.map(player => player.id).filter(Boolean).sort()
   const n = playerIds.length
-  if (!roundId || !shouldSplitRound(n)) return null
+  if (!roundId || !shouldSplitRound(n, bSidesEnabled)) return null
 
   const sizeA = Math.ceil(n / 2)
   const counts = priorPairCounts(playerIds, priorGroupRows)

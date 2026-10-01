@@ -63,7 +63,7 @@ Keep the queue stocked ahead of the current week. `addRound` appends at the end 
 
 ## Round Sides
 
-A round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two sides, so nobody has to listen to the whole league in one week.
+Rounds default to one voting pool (Side A only). Admin can enable Side B with `league_settings.b_sides_enabled`; then a round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two balanced sides. Disabling Side B prevents new splits; already-split rounds keep their assignments and voting pools.
 
 - Sides live in `round_groups` and are assigned once, when the round becomes current. Whoever opens the app first writes them through the `assign_round_groups` RPC, which is first-writer-wins, so simultaneous clients cannot produce two different splits.
 - `src/lib/groups.js` picks the split by minimising how often the same pair lands together, which keeps season-long pairings even. Do not replace it with a plain shuffle.
