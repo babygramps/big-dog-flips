@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { playlistSyncMessage } from '../../lib/roundPlaylists.js'
 
-// The nightly job does this on its own shortly after midnight Pacific. The button
-// is for when TuneMyMusic was down overnight and nobody wants to wait a day.
+// The nightly job does this on its own the night submission closes, and does not
+// retry. The button covers a night when TuneMyMusic was down.
 export default function PlaylistLinksTool() {
   const [working, setWorking] = useState(false)
   const [message, setMessage] = useState('')
@@ -32,7 +32,7 @@ export default function PlaylistLinksTool() {
         {message && <span className={isError ? 'error-msg' : 'success-msg'}>{message}</span>}
       </div>
       <p className="muted">
-        Each night after submissions close, every side gets a TuneMyMusic link in its Shared playlists box, so anyone can import the round into their own music app. Use this if a link is missing.
+        The night submissions close, every side gets a TuneMyMusic link in its Shared playlists box, so anyone can import the round into their own music app. That run does not retry, so use this if a link is missing.
       </p>
       <button type="button" className="btn btn-secondary" onClick={makeLinks} disabled={working}>
         {working ? 'Making links...' : 'Make playlist links now'}

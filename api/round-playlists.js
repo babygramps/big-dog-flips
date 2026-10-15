@@ -2,8 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 import { syncTuneMyMusicPlaylists } from '../src/lib/roundPlaylists.js'
 import { createTuneMyMusicShare } from '../src/lib/tuneMyMusic.js'
 
-// Vercel calls this every night (see vercel.json) and the admin page calls it on
-// demand. It only fills in missing TuneMyMusic links, so repeat calls are harmless.
+// Vercel's cron (see vercel.json) sends a GET every night; the run only does anything on
+// the night submission closes. The admin button sends a POST, which fills in a missing
+// link any time during voting or appreciation. Repeat calls are harmless.
 
 async function rows(query, failure) {
   const { data, error } = await query
@@ -55,7 +56,8 @@ export function roundPlaylistsHandler({ makeStore = supabaseStore, createShare =
     if (!store) return res.status(500).json({ error: 'The server is missing its Supabase settings.' })
 
     try {
-      const result = await syncTuneMyMusicPlaylists({ store, createShare, now: now() })
+      const trigger = req.method === 'GET' ? 'nightly' : 'manual'
+      const result = await syncTuneMyMusicPlaylists({ store, createShare, now: now(), trigger })
       return res.status(200).json(result)
     } catch (error) {
       return res.status(502).json({ error: error.message || 'Could not make playlist links.' })

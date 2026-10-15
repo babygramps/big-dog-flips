@@ -110,8 +110,10 @@ Standings count every past round plus the current round once it reaches apprecia
 
 Each side of the current round gets a TuneMyMusic share link in its Shared playlists box (`round_playlists`, service `TuneMyMusic`). Anyone can open it, play the songs, or import the playlist into their own streaming service.
 
-- A Vercel cron in `vercel.json` calls `api/round-playlists.js` daily at 08:00 UTC, shortly after midnight Pacific all year. On the Hobby plan it fires anywhere within that hour.
-- It only acts while the current round is in voting or appreciation, and only for sides with no TuneMyMusic link yet, so repeat runs are harmless and a failed night is retried the next day. The admin button calls the same endpoint.
+- A Vercel cron in `vercel.json` sends a GET to `api/round-playlists.js` daily at 08:00 UTC, shortly after midnight Pacific all year. On the Hobby plan it fires anywhere within that hour.
+- The nightly run acts only on the night submission closes, judged from `weekly_phase_template` rather than a fixed weekday, and does not retry. It wakes daily because the template is editable.
+- The admin button sends a POST to the same endpoint, which fills in any missing link while the current round is in voting or appreciation.
+- Both only add links for sides with no TuneMyMusic link yet, so repeat calls are harmless.
 - Shares list title, artist, and album in a fixed per-round shuffle. They never include submitters, so they are safe during anonymous voting.
 - The endpoint builds its own Supabase client from `process.env`, because `src/lib/supabase.js` reads Vite variables that serverless functions do not have.
 - TuneMyMusic has no public API. `src/lib/tuneMyMusic.js` replays the requests its website makes, as a fresh anonymous guest each time. It can break without notice, its terms of use forbid reverse engineering the site, and shares cannot be edited or deleted afterward.

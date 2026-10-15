@@ -1,12 +1,16 @@
 import { groupLabel, sideOf, sidesForRound } from './groups.js'
 import { listeningOrderFor } from './listeningOrder.js'
-import { getLeagueContext } from './schedule.js'
+import { addDays, getLeagueContext, phaseForDateKey } from './schedule.js'
 
 export const TUNEMYMUSIC_SERVICE = 'TuneMyMusic'
 
-// Songs are final once submission closes, so shares are made from voting onward.
-// Appreciation is included so a night when TuneMyMusic was down gets retried.
+// Songs are final once submission closes. The nightly run acts only on the night it
+// closes; the admin button can fill in a missing link any time after that.
 const SHARE_PHASES = new Set(['voting', 'appreciation'])
+
+function submissionEndedLastMidnight(settings, context) {
+  return context.phase !== 'submission' && phaseForDateKey(settings, addDays(context.today, -1)) === 'submission'
+}
 
 function sideJobs({ round, settings, songs, roundGroups, playlists }) {
   const leagueName = settings?.league_name || 'Big Dog Flips'
@@ -28,13 +32,14 @@ function sideJobs({ round, settings, songs, roundGroups, playlists }) {
     .filter(job => job.songs.length > 0)
 }
 
-// The nightly job and the admin button both call this. It only adds links that are
-// missing, so running it again is harmless.
-export async function syncTuneMyMusicPlaylists({ store, createShare, now = new Date() }) {
+// The nightly job (trigger 'nightly') and the admin button (trigger 'manual') both
+// call this. It only adds links that are missing, so running it again is harmless.
+export async function syncTuneMyMusicPlaylists({ store, createShare, now = new Date(), trigger = 'manual' }) {
   const { settings, rounds } = await store.loadSchedule()
   const context = getLeagueContext(rounds, settings, now)
   const round = context.currentRound
-  if (!round || !SHARE_PHASES.has(context.phase)) return { status: 'not-ready', created: [], failed: [] }
+  const ready = trigger === 'nightly' ? submissionEndedLastMidnight(settings, context) : SHARE_PHASES.has(context.phase)
+  if (!round || !ready) return { status: 'not-ready', created: [], failed: [] }
 
   const { songs, roundGroups, playlists } = await store.loadRound(round.id)
   const created = []

@@ -4,6 +4,7 @@ import { roundPlaylistsHandler } from '../../api/round-playlists.js'
 import { makeRound, makeSettings, makeSong } from '../fixtures/league.js'
 
 const THURSDAY = new Date('2026-09-17T08:30:00Z')
+const FRIDAY = new Date('2026-09-18T08:30:00Z')
 
 function fakeResponse() {
   return {
@@ -38,6 +39,24 @@ describe('round playlists endpoint', () => {
       assert.deepEqual(res.body, { status: 'done', created: [{ groupIndex: 0, url: 'https://www.tunemymusic.com/share/share-1' }], failed: [] })
     })
   }
+
+  it('treats GET as the nightly run, which skips nights other than the one submission ends', async () => {
+    const handler = roundPlaylistsHandler({ makeStore: readyStore, createShare, now: () => FRIDAY })
+    const res = fakeResponse()
+
+    await handler({ method: 'GET' }, res)
+
+    assert.deepEqual(res.body, { status: 'not-ready', created: [], failed: [] })
+  })
+
+  it('treats POST as the admin button, which fills a missing link any time during voting', async () => {
+    const handler = roundPlaylistsHandler({ makeStore: readyStore, createShare, now: () => FRIDAY })
+    const res = fakeResponse()
+
+    await handler({ method: 'POST' }, res)
+
+    assert.equal(res.body.created.length, 1)
+  })
 
   it('turns away other methods', async () => {
     const handler = roundPlaylistsHandler({ makeStore: readyStore, createShare, now: () => THURSDAY })

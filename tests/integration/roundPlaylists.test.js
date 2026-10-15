@@ -6,7 +6,9 @@ import { makeRound, makeSettings, makeSong } from '../fixtures/league.js'
 // The fixture schedule starts Monday 2026-09-14, so round-a runs that week.
 // Each time is about 1:30 AM Pacific, when the nightly job fires.
 const TUESDAY = new Date('2026-09-15T08:30:00Z')
+const WEDNESDAY = new Date('2026-09-16T08:30:00Z')
 const THURSDAY = new Date('2026-09-17T08:30:00Z')
+const FRIDAY = new Date('2026-09-18T08:30:00Z')
 const SUNDAY = new Date('2026-09-20T08:30:00Z')
 const NEXT_MONDAY = new Date('2026-09-21T08:30:00Z')
 
@@ -53,11 +55,11 @@ function fakeShares({ failTitle = null } = {}) {
 }
 
 describe('syncTuneMyMusicPlaylists', () => {
-  it('makes one share per side once voting opens, each holding only that side’s songs', async () => {
+  it('makes one share per side the night submission ends, each holding only that side’s songs', async () => {
     const store = memoryStore(splitRound())
     const shares = fakeShares()
 
-    const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: THURSDAY })
+    const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: THURSDAY, trigger: 'nightly' })
 
     assert.deepEqual(shares.made.map(share => [share.title, share.username, [...share.songs].sort()]), [
       ['Big Dog Flips · Rain · Side A', 'Big Dog Flips', ['Only Happy When It Rains', 'Purple Rain']],
@@ -71,17 +73,50 @@ describe('syncTuneMyMusicPlaylists', () => {
     assert.deepEqual(result.failed, [])
   })
 
-  for (const [phase, now, shareCount] of [
-    ['submission', TUESDAY, 0],
-    ['voting', THURSDAY, 2],
-    ['appreciation', SUNDAY, 2],
-    ['the week after, with no round queued', NEXT_MONDAY, 0],
+  for (const [night, now, shareCount] of [
+    ['Tuesday, mid-submission', TUESDAY, 0],
+    ['Thursday, the night submission ends', THURSDAY, 2],
+    ['Friday, mid-voting', FRIDAY, 0],
+    ['Sunday, during appreciation', SUNDAY, 0],
+    ['the next Monday, with no round queued', NEXT_MONDAY, 0],
   ]) {
-    it(`${shareCount ? 'makes' : 'does not make'} shares during ${phase}`, async () => {
+    it(`the nightly run ${shareCount ? 'makes' : 'skips'} shares on ${night}`, async () => {
       const store = memoryStore(splitRound())
       const shares = fakeShares()
 
-      const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now })
+      const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now, trigger: 'nightly' })
+
+      assert.equal(shares.made.length, shareCount)
+      assert.equal(result.status, shareCount ? 'done' : 'not-ready')
+    })
+  }
+
+  it('the nightly run follows the league schedule, not a fixed weekday', async () => {
+    const league = splitRound()
+    league.settings = makeSettings({
+      league_name: 'Big Dog Flips',
+      weekly_phase_template: { monday: 'submission', tuesday: 'submission', wednesday: 'off', thursday: 'voting', friday: 'voting', saturday: 'voting', sunday: 'appreciation' },
+    })
+    const wednesday = fakeShares()
+    const thursday = fakeShares()
+
+    await syncTuneMyMusicPlaylists({ store: memoryStore(league), createShare: wednesday.createShare, now: WEDNESDAY, trigger: 'nightly' })
+    await syncTuneMyMusicPlaylists({ store: memoryStore(league), createShare: thursday.createShare, now: THURSDAY, trigger: 'nightly' })
+
+    assert.equal(wednesday.made.length, 2)
+    assert.equal(thursday.made.length, 0)
+  })
+
+  for (const [phase, now, shareCount] of [
+    ['submission', TUESDAY, 0],
+    ['voting', FRIDAY, 2],
+    ['appreciation', SUNDAY, 2],
+  ]) {
+    it(`the admin button ${shareCount ? 'fills in missing shares' : 'makes nothing'} during ${phase}`, async () => {
+      const store = memoryStore(splitRound())
+      const shares = fakeShares()
+
+      const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now, trigger: 'manual' })
 
       assert.equal(shares.made.length, shareCount)
       assert.equal(result.status, shareCount ? 'done' : 'not-ready')
