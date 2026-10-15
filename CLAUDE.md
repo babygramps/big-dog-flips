@@ -88,7 +88,7 @@ Four routes, all under `src/pages/`:
 - `/` — Home: the current round, its phase, a countdown, and the submission, voting, or appreciation view from `src/pages/home/`.
 - `/rounds` — queue, current round, and the past-round archive. Defined in `src/pages/QueuePage.jsx`, which exports `RoundsPage`; the filename predates the rename. Each archive card links to `/rounds/:roundId`, whose full scorecard reuses the appreciation results UI, including side rosters and final submission/voting status.
 - `/players` — player directory, profile editing, and season standings. **Standings live here.** Round-by-round results live in the past-round archive rather than a standings table. There is no leaderboard page; `/leaderboard` redirects to this route.
-- `/admin` — league settings, schedule editor, duplicate merge tool, and player activation. `AdminUnlock` is a slide-to-confirm gesture guarding against accidental taps, not a password.
+- `/admin` — league settings, schedule editor, duplicate merge tool, player activation, and a button that makes any missing TuneMyMusic links. `AdminUnlock` is a slide-to-confirm gesture guarding against accidental taps, not a password.
 
 The remaining Season 1 paths (`/queue`, `/archive`, `/history`, `/settings`) redirect into those four.
 
@@ -100,10 +100,21 @@ The remaining Season 1 paths (`/queue`, `/archive`, `/history`, `/settings`) red
 - `src/lib/supabase.js` owns the Supabase client and env-var guard.
 - `src/lib/data.js` owns the per-page fetchers and the realtime table lists they subscribe to.
 - `src/lib/mutations.js` owns every write except avatar uploads, which go through `src/lib/profilePictures.js`. No component or hook calls Supabase directly; keep it that way.
+- `src/lib/roundPlaylists.js` decides which sides of the current round still need a TuneMyMusic link; `src/lib/tuneMyMusic.js` makes the share.
 
 Keep scoring rules centralized in `src/lib/scoring.js`; duplicate handling must be identical on Home, Rounds history, and Players standings.
 
 Standings count every past round plus the current round once it reaches appreciation. `getScoredRoundIds` in `src/lib/schedule.js` is the only place that decides which rounds those are.
+
+## Shared Playlists
+
+Each side of the current round gets a TuneMyMusic share link in its Shared playlists box (`round_playlists`, service `TuneMyMusic`). Anyone can open it, play the songs, or import the playlist into their own streaming service.
+
+- A Vercel cron in `vercel.json` calls `api/round-playlists.js` daily at 08:00 UTC, shortly after midnight Pacific all year. On the Hobby plan it fires anywhere within that hour.
+- It only acts while the current round is in voting or appreciation, and only for sides with no TuneMyMusic link yet, so repeat runs are harmless and a failed night is retried the next day. The admin button calls the same endpoint.
+- Shares list title, artist, and album in a fixed per-round shuffle. They never include submitters, so they are safe during anonymous voting.
+- The endpoint builds its own Supabase client from `process.env`, because `src/lib/supabase.js` reads Vite variables that serverless functions do not have.
+- TuneMyMusic has no public API. `src/lib/tuneMyMusic.js` replays the requests its website makes, as a fresh anonymous guest each time. It can break without notice, its terms of use forbid reverse engineering the site, and shares cannot be edited or deleted afterward.
 
 ## Duplicate Rules
 

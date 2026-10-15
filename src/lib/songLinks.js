@@ -28,6 +28,7 @@ export function serviceLabelForUrl(value) {
   if (hasHost(url, 'bandcamp.com')) return 'Bandcamp'
   if (hasHost(url, 'soundcloud.com')) return 'SoundCloud'
   if (url.hostname === 'music.apple.com') return 'Apple Music'
+  if (hasHost(url, 'tunemymusic.com')) return 'TuneMyMusic'
   return 'Listen'
 }
 

@@ -17,6 +17,7 @@ import {
 } from '../lib/schedule.js'
 import AdminUnlock from './admin/AdminUnlock.jsx'
 import DuplicateMergeTool from './admin/DuplicateMergeTool.jsx'
+import PlaylistLinksTool from './admin/PlaylistLinksTool.jsx'
 import PlayerStatusTool from './admin/PlayerStatusTool.jsx'
 import ScheduleEditor from './admin/ScheduleEditor.jsx'
 
@@ -161,6 +162,8 @@ export default function AdminPage() {
           </section>
 
           <PlayerStatusTool players={data.players} currentPlayerId={player.id} onChanged={reload} />
+
+          <PlaylistLinksTool />
         </>
       )}
     </main>

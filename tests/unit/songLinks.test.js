@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { songLinkError, songLinksFor } from '../../src/lib/songLinks.js'
+import { serviceLabelForUrl, songLinkError, songLinksFor } from '../../src/lib/songLinks.js'
 import { makeSong } from '../fixtures/league.js'
 
 describe('song service links', () => {
@@ -152,4 +152,16 @@ describe('song link validation', () => {
       assert.notEqual(songLinkError(makeSong({ link })), '')
     }
   })
+})
+
+describe('playlist link labels', () => {
+  for (const [url, label] of [
+    ['https://www.tunemymusic.com/share/AwgWM0yv7d', 'TuneMyMusic'],
+    ['https://tunemymusic.com/share/AwgWM0yv7d', 'TuneMyMusic'],
+    ['https://tunemymusic.com.example.net/share/AwgWM0yv7d', 'Listen'],
+  ]) {
+    it(`labels ${url} as ${label}`, () => {
+      assert.equal(serviceLabelForUrl(url), label)
+    })
+  }
 })
