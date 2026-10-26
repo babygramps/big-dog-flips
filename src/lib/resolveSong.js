@@ -1,3 +1,4 @@
+import { findSongArtwork, largeAppleArtwork, safeArtworkUrl } from './songArtwork.js'
 import { SONG_SERVICES, serviceFieldForUrl, songLinkError } from './songLinks.js'
 
 const serviceKeys = { spotify_url: 'spotify', tidal_url: 'tidal', apple_music_url: 'appleMusic', youtube_music_url: 'youtubeMusic' }
@@ -44,7 +45,7 @@ async function providerMetadata(url, field, parsed, fetcher) {
     const data = await getJson(`https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=song&country=US`, fetcher)
     const song = data.results?.find(item => item.kind === 'song' && String(item.trackId) === id)
     if (!song) throw error('Apple Music did not return a song for that link.', 404)
-    return { artist: song.artistName, title: song.trackName, album: song.collectionName || '' }
+    return { artist: song.artistName, title: song.trackName, album: song.collectionName || '', artwork: largeAppleArtwork(song.artworkUrl100) }
   }
   if (field === 'youtube_music_url' || !field) {
     const video = parsed.hostname === 'youtu.be' ? parsed.pathname.slice(1) : parsed.searchParams.get('v')
@@ -53,7 +54,8 @@ async function providerMetadata(url, field, parsed, fetcher) {
     let title = clean(data.title)
     if (title.startsWith(`${artist} - `)) title = title.slice(artist.length + 3)
     if (!title || !artist) throw error('Could not identify the artist and title for this video.', 404)
-    return { artist, title, album: '' }
+    // A video thumbnail is a last resort; catalog cover art is preferred.
+    return { artist, title, album: '', artwork: '', videoThumbnail: safeArtworkUrl(data.thumbnail_url) }
   }
   // These services publish separate title and artist Open Graph tags on track pages.
   // Treat them as a suggestion to confirm, since providers can change their markup.
@@ -64,13 +66,13 @@ async function providerMetadata(url, field, parsed, fetcher) {
     const description = meta(html, 'description')
     const match = description.match(/^Listen to (.+), a track by (.+) from the album (.+) on TIDAL$/)
     if (!match) throw error('Could not identify this TIDAL track. Enter its details manually.', 404)
-    return { title: match[1], artist: match[2], album: match[3] }
+    return { title: match[1], artist: match[2], album: match[3], artwork: safeArtworkUrl(meta(html, 'og:image')) }
   }
   const title = meta(html, 'og:title')
   const description = meta(html, 'og:description').split(' · ')
   const artist = meta(html, 'music:musician_description') || meta(html, 'music:musician') || description[0]
   if (!title || !artist) throw error('Could not identify the artist and title. Enter them manually.', 404)
-  return { artist, title, album: description[1] && description[2] === 'Song' ? description[1] : '' }
+  return { artist, title, album: description[1] && description[2] === 'Song' ? description[1] : '', artwork: safeArtworkUrl(meta(html, 'og:image')) }
 }
 
 function musicfetchLinks(result) {
@@ -121,15 +123,17 @@ export async function resolveSong(url, { fetcher = fetch, token = process.env.MU
       if (result?.type === 'track' && result.name && result.artists?.length) {
         Object.assign(links, musicfetchLinks(result))
         if (field) links[field] = url.trim()
-        return { artist: clean(result.artists[0].name), title: clean(result.name), album: clean(result.albums?.[0]?.name), links }
+        const song = { artist: clean(result.artists[0].name), title: clean(result.name), album: clean(result.albums?.[0]?.name) }
+        return { ...song, artwork_url: safeArtworkUrl(result.image?.url) || await findSongArtwork(song, { fetcher }), links }
       }
     } catch { /* Provider metadata is still useful when enrichment is unavailable. */ }
   }
 
-  const metadata = await providerMetadata(url.trim(), field, parsed, fetcher)
+  const { artwork, videoThumbnail, ...metadata } = await providerMetadata(url.trim(), field, parsed, fetcher)
   if (field !== 'apple_music_url') {
     const apple = await appleMatch(metadata, fetcher)
     if (apple) links.apple_music_url = apple
   }
-  return { ...metadata, links }
+  const artworkUrl = artwork || await findSongArtwork(metadata, { fetcher }) || videoThumbnail || ''
+  return { ...metadata, artwork_url: artworkUrl, links }
 }

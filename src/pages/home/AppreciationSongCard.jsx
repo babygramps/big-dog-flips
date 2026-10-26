@@ -1,4 +1,5 @@
 import Avatar from '../../components/Avatar.jsx'
+import SongArtwork from '../../components/SongArtwork.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
 import CommentThread from './CommentThread.jsx'
 import { commentsForEntry, playerName } from './homeUtils.js'
@@ -23,7 +24,8 @@ export default function AppreciationSongCard({
       <div className="appreciation-card-body">
         {context && <div className="appreciation-card-context">{context}</div>}
 
-        <header className="appreciation-song-header">
+        <header className={`appreciation-song-header ${entry.artwork_url ? 'has-artwork' : ''}`.trim()}>
+          <SongArtwork song={entry} className="appreciation-artwork" />
           <div className="appreciation-track-copy">
             <div className="section-heading compact">
               <h2>{entry.title}</h2>

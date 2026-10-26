@@ -1694,6 +1694,33 @@ select:focus {
   min-width: 0;
 }
 
+.appreciation-song-header.has-artwork {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.song-artwork {
+  display: block;
+  flex: 0 0 auto;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--lemon);
+  object-fit: cover;
+}
+
+.appreciation-artwork {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.submission-artwork {
+  width: 4.75rem;
+  height: 4.75rem;
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--aqua-soft);
+}
+
 .appreciation-track-copy .section-heading {
   justify-content: flex-start;
   gap: 0.45rem;
@@ -3527,6 +3554,11 @@ select:focus {
 }
 
 @media (max-width: 560px) {
+  .appreciation-artwork {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
   .page {
     width: min(100% - 1rem, 1040px);
     padding-top: 0.5rem;

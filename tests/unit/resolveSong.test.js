@@ -12,7 +12,7 @@ it('fills title and artist from a Spotify share link and adds one exact Apple ma
     return { ok: true, text: async () => '<meta property="og:title" content="Never Gonna Give You Up"><meta property="og:description" content="Rick Astley · Album · Song · 1987">' }
   }
   assert.deepEqual(await resolveSong(spotify, { fetcher, token: '' }), {
-    artist: 'Rick Astley', title: 'Never Gonna Give You Up', album: 'Album', links: { spotify_url: spotify, apple_music_url: apple },
+    artist: 'Rick Astley', title: 'Never Gonna Give You Up', album: 'Album', artwork_url: '', links: { spotify_url: spotify, apple_music_url: apple },
   })
 })
 
@@ -30,7 +30,7 @@ it('uses a YouTube Music video title and channel but never invents other direct 
     ? json({ title: 'Artist - A Song', author_name: 'Artist - Topic' })
     : json({ results: [] })
   const result = await resolveSong(input, { fetcher, token: '' })
-  assert.deepEqual(result, { artist: 'Artist', title: 'A Song', album: '', links: { youtube_music_url: input } })
+  assert.deepEqual(result, { artist: 'Artist', title: 'A Song', album: '', artwork_url: '', links: { youtube_music_url: input } })
 })
 
 it('reads TIDAL artist, title, and album from its track description', async () => {
@@ -40,7 +40,7 @@ it('reads TIDAL artist, title, and album from its track description', async () =
     text: async () => '<meta name="description" content="Listen to Never Gonna Give You Up (Pianoforte), a track by Rick Astley from the album The Best of Me on TIDAL"><meta property="og:title" content="Rick Astley - Never Gonna Give You Up (Pianoforte)"><meta property="music:musician" content="https://tidal.com/artist/1798">',
   }
   assert.deepEqual(await resolveSong(url, { fetcher, token: '' }), {
-    title: 'Never Gonna Give You Up (Pianoforte)', artist: 'Rick Astley', album: 'The Best of Me', links: { tidal_url: url },
+    title: 'Never Gonna Give You Up (Pianoforte)', artist: 'Rick Astley', album: 'The Best of Me', artwork_url: '', links: { tidal_url: url },
   })
 })
 

@@ -29,6 +29,7 @@ tests/
   unit/songLinks.test.js           Direct links, search fallbacks, validation
   unit/scoring.test.js             Self-votes, duplicate totals, tied ranks
   unit/schedule.test.js            Pacific midnight, DST, scored-round eligibility
+  unit/songArtwork.test.js         Free catalog cover art, fallbacks, duplicate art
   unit/tuneMyMusic.test.js         Share CSV, guest session, and failed-step handling
   unit/roundPlaylistsHandler.test.js  Nightly playlist endpoint responses
   integration/songResults.test.js  Scoring → links/copy lists and schedule → standings

@@ -2,6 +2,7 @@ import { addDays, getCurrentMonday, normalizeTemplate } from './schedule.js'
 import { randomDogAvatarUrl } from './dogAvatars.js'
 import { supabase } from './supabase.js'
 import { SONG_SERVICES, songLinkError } from './songLinks.js'
+import { safeArtworkUrl } from './songArtwork.js'
 
 export async function saveSongSubmission({ roundId, playerId, form }) {
   const linkError = songLinkError(form)
@@ -17,6 +18,7 @@ export async function saveSongSubmission({ roundId, playerId, form }) {
       link: form.link.trim() || null,
       ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field]?.trim() || null])),
       submitter_note: form.submitter_note.trim() || null,
+      artwork_url: safeArtworkUrl(form.artwork_url) || null,
     }, { onConflict: 'round_id,player_id' })
 
   return { error }

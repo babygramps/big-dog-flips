@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import SideRoster from '../../components/SideRoster.jsx'
+import SongArtwork from '../../components/SongArtwork.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
 import { groupLabel } from '../../lib/groups.js'
 import { saveSongSubmission } from '../../lib/mutations.js'
@@ -13,6 +14,23 @@ function songFormValues(song) {
     link: song?.link || '',
     ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, song?.[field] || ''])),
     submitter_note: song?.submitter_note || '',
+    artwork_url: song?.artwork_url || '',
+  }
+}
+
+// Artwork is a nice extra; a failed lookup never blocks the submission.
+async function findArtwork({ artist, title, album }) {
+  try {
+    const response = await fetch('/api/song-artwork', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ artist, title, album }),
+    })
+    if (!response.ok) return ''
+    const result = await response.json()
+    return typeof result.artwork_url === 'string' ? result.artwork_url : ''
+  } catch {
+    return ''
   }
 }
 
@@ -58,6 +76,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
       artist: lookup.artist,
       title: lookup.title,
       album: lookup.album || current.album,
+      artwork_url: lookup.artwork_url || '',
       ...Object.fromEntries(Object.entries(lookup.links).filter(([key, value]) => value && !current[key])),
     }))
     setLookup(null)
@@ -69,7 +88,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
     const nextSong = songFormValues(mySong)
     setSavedSong(nextSong)
     if (!editing) setForm(nextSong)
-  }, [mySong?.id, mySong?.artist, mySong?.title, mySong?.album, mySong?.link, mySong?.spotify_url, mySong?.tidal_url, mySong?.apple_music_url, mySong?.youtube_music_url, mySong?.submitter_note])
+  }, [mySong?.id, mySong?.artist, mySong?.title, mySong?.album, mySong?.link, mySong?.spotify_url, mySong?.tidal_url, mySong?.apple_music_url, mySong?.youtube_music_url, mySong?.submitter_note, mySong?.artwork_url])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -80,6 +99,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
       link: form.link.trim(),
       ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field].trim()])),
       submitter_note: form.submitter_note.trim(),
+      artwork_url: form.artwork_url,
     }
 
     if (!nextSong.artist || !nextSong.title) {
@@ -102,6 +122,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
 
     let saveError
     try {
+      if (!nextSong.artwork_url) nextSong.artwork_url = await findArtwork(nextSong)
       const result = await saveSongSubmission({
         roundId: round.id,
         playerId: player.id,
@@ -208,7 +229,11 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
             )}
 
             <div className="submission-receipt">
-              <div className="submission-record" aria-hidden="true"><span /></div>
+              <SongArtwork
+                song={savedSong}
+                className="submission-artwork"
+                fallback={<div className="submission-record" aria-hidden="true"><span /></div>}
+              />
               <div className="submission-receipt-copy">
                 <p className="eyebrow">Your pick</p>
                 <h3>{savedSong.title}</h3>
@@ -258,17 +283,17 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
               <div className="form-row">
                 <label>
                   <span>Artist</span>
-                  <input value={form.artist} onChange={event => setForm(f => ({ ...f, artist: event.target.value }))} />
+                  <input value={form.artist} onChange={event => setForm(f => ({ ...f, artist: event.target.value, artwork_url: '' }))} />
                 </label>
                 <label>
                   <span>Song title</span>
-                  <input value={form.title} onChange={event => setForm(f => ({ ...f, title: event.target.value }))} />
+                  <input value={form.title} onChange={event => setForm(f => ({ ...f, title: event.target.value, artwork_url: '' }))} />
                 </label>
               </div>
               <div className="form-row">
                 <label>
                   <span>Album</span>
-                  <input value={form.album} onChange={event => setForm(f => ({ ...f, album: event.target.value }))} />
+                  <input value={form.album} onChange={event => setForm(f => ({ ...f, album: event.target.value, artwork_url: '' }))} />
                 </label>
                 <label>
                   <span>Other link (optional)</span>

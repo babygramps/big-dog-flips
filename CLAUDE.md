@@ -118,6 +118,15 @@ Each side of the current round gets a TuneMyMusic share link in its Shared playl
 - The endpoint builds its own Supabase client from `process.env`, because `src/lib/supabase.js` reads Vite variables that serverless functions do not have.
 - TuneMyMusic has no public API. `src/lib/tuneMyMusic.js` replays the requests its website makes, as a fresh anonymous guest each time. It can break without notice, its terms of use forbid reverse engineering the site, and shares cannot be edited or deleted afterward.
 
+## Song Artwork
+
+Submitted songs get a cover-art thumbnail in `songs.artwork_url`, shown on the submission receipt, voting cards, and appreciation cards.
+
+- `src/lib/songArtwork.js` finds art from free, keyless catalogs: the iTunes Search API first, then Deezer. Only https URLs are kept.
+- Link lookups (`api/resolve-song.js`) use the provider's own art when it has one (Apple, Spotify, TIDAL), otherwise the catalogs, and fall back to the YouTube video thumbnail last.
+- On save, a song with no artwork asks `api/song-artwork.js` by artist, title, and album. Editing any of those clears the old art so a fresh one is found. A failed lookup never blocks a submission; the card just has no thumbnail.
+- Cover art identifies the song, never the submitter, so it is safe during anonymous voting. A merged duplicate shows the canonical song's art, or any member's when it has none.
+
 ## Duplicate Rules
 
 Duplicate merges happen after voting. The app never mutates votes to merge duplicates. A merge group joins two or more song rows and chooses one canonical display song.

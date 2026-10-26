@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
+import SongArtwork from '../../components/SongArtwork.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
 import { ANONYMOUS_COMMENT_AVATAR_URL, anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
@@ -192,6 +193,7 @@ export default function VotingView({
                 <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote !== 0 ? 'has-votes' : ''}`} key={song.id}>
                   <div className="voting-song-header">
                     <div className="song-card-main">
+                      <SongArtwork song={song} />
                       <div>
                         <h2>{song.title}</h2>
                         <p>{song.artist}{song.album ? ` · ${song.album}` : ''}</p>
