@@ -120,4 +120,4 @@ Phases change at midnight Pacific time.
 
 `20260921120000_allow_downvotes.sql` allows -1 vote rows. Apply this migration before deploying the voting UI that allows an optional downvote within the three-vote allowance. Existing ballots are preserved.
 
-`20261026120000_add_song_artwork.sql` adds `songs.artwork_url` for cover-art thumbnails. Apply it before deploying the artwork UI: the app selects this column on every page that loads songs. Existing songs keep working without a thumbnail.
+`20261026120000_add_song_artwork.sql` adds `songs.artwork_url` for cover-art thumbnails. Until it is applied, the app loads and saves songs without thumbnails, so deploying first is safe. Existing songs keep working without a thumbnail.

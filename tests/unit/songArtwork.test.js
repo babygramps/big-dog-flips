@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { buildSongEntries } from '../../src/lib/scoring.js'
-import { findSongArtwork } from '../../src/lib/songArtwork.js'
+import { findSongArtwork, isMissingArtworkColumn } from '../../src/lib/songArtwork.js'
 import { resolveSong } from '../../src/lib/resolveSong.js'
 import { makeDuplicateRound, makeSong } from '../fixtures/league.js'
 
@@ -69,5 +69,13 @@ describe('song artwork', () => {
 
   it('leaves a song without artwork blank', () => {
     assert.equal(buildSongEntries({ songs: [makeSong()] })[0].artwork_url, null)
+  })
+
+  it('recognises a database without the artwork column, and no other error', () => {
+    assert.equal(isMissingArtworkColumn({ code: '42703', message: 'column songs.artwork_url does not exist' }), true)
+    assert.equal(isMissingArtworkColumn({ code: 'PGRST204', message: "Could not find the 'artwork_url' column of 'songs' in the schema cache" }), true)
+    assert.equal(isMissingArtworkColumn({ code: '42703', message: 'column songs.tidal_url does not exist' }), false)
+    assert.equal(isMissingArtworkColumn({ code: '42501', message: 'permission denied for artwork_url' }), false)
+    assert.equal(isMissingArtworkColumn(null), false)
   })
 })

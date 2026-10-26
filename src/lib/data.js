@@ -1,4 +1,5 @@
 import { getCurrentMonday, getScoredRoundIds } from './schedule.js'
+import { isMissingArtworkColumn } from './songArtwork.js'
 import { supabase } from './supabase.js'
 
 const PLAYER_EMBED_FIELDS = 'id, name, avatar_url, avatar_color'
@@ -8,6 +9,7 @@ const ROUND_FIELDS = 'id, theme_name, theme_description, queue_position, submitt
 const ROUND_WITH_PLAYER = `${ROUND_FIELDS}, players(${PLAYER_EMBED_FIELDS})`
 const SONG_FIELDS = 'id, round_id, player_id, artist, title, album, link, spotify_url, tidal_url, apple_music_url, youtube_music_url, artwork_url, submitter_note, created_at'
 const SONG_WITH_PLAYER = `${SONG_FIELDS}, players(${PLAYER_EMBED_FIELDS})`
+const SONG_WITH_PLAYER_NO_ARTWORK = SONG_WITH_PLAYER.replace('artwork_url, ', '')
 const VOTE_FIELDS = 'id, round_id, song_id, voter_player_id, points, created_at, updated_at'
 const COMMENT_FIELDS = 'id, round_id, song_id, player_id, body, gif_url, gif_preview_url, gif_provider, gif_id, created_at'
 // Pin this to the direct author relationship. comment_likes also links comments
@@ -138,6 +140,18 @@ function roundScopedQuery(table, fields, roundIds, orderBy = null) {
   return orderBy ? query.order(orderBy) : query
 }
 
+// Until the artwork migration is applied, load songs without thumbnails
+// instead of treating every round as empty.
+let songArtworkColumnMissing = false
+async function songsForRounds(roundIds) {
+  if (!songArtworkColumnMissing) {
+    const result = await roundScopedQuery('songs', SONG_WITH_PLAYER, roundIds, 'created_at')
+    if (!isMissingArtworkColumn(result.error)) return result
+    songArtworkColumnMissing = true
+  }
+  return roundScopedQuery('songs', SONG_WITH_PLAYER_NO_ARTWORK, roundIds, 'created_at')
+}
+
 function groupSongsForRounds(roundIds) {
   if (roundIds.length === 0) return Promise.resolve({ data: [] })
   return supabase
@@ -230,7 +244,7 @@ export async function fetchHomeRoundData(roundId) {
     { data: groupSongs },
     { data: playlists },
   ] = await Promise.all([
-    roundScopedQuery('songs', SONG_WITH_PLAYER, roundIds, 'created_at'),
+    songsForRounds(roundIds),
     roundScopedQuery('votes', VOTE_FIELDS, roundIds),
     roundScopedQuery('comments', COMMENT_WITH_PLAYER, roundIds, 'created_at'),
     commentLikesForRounds(roundIds),
@@ -266,7 +280,7 @@ export async function fetchPastRoundData(roundId) {
   ] = await Promise.all([
     supabase.from('rounds').select(ROUND_WITH_PLAYER).order('queue_position'),
     supabase.from('players').select(PLAYER_FIELDS).order('name'),
-    roundScopedQuery('songs', SONG_WITH_PLAYER, roundIds, 'created_at'),
+    songsForRounds(roundIds),
     roundScopedQuery('votes', VOTE_FIELDS, roundIds),
     roundScopedQuery('comments', COMMENT_WITH_PLAYER, roundIds, 'created_at'),
     commentLikesForRounds(roundIds),
@@ -313,7 +327,7 @@ async function fetchSeasonScoringData({ settings, includeCommentDetails = false,
   const roundIds = [...getScoredRoundIds(roundRows, settings)]
 
   const requests = [
-    roundScopedQuery('songs', SONG_WITH_PLAYER, roundIds, 'created_at'),
+    songsForRounds(roundIds),
     roundScopedQuery('votes', VOTE_FIELDS, roundIds),
     roundScopedQuery('comments', includeCommentDetails ? COMMENT_WITH_PLAYER : COMMENT_AWARD_FIELDS, roundIds, 'created_at'),
     roundScopedQuery('duplicate_groups', DUPLICATE_GROUP_FIELDS, roundIds),
@@ -370,7 +384,7 @@ export async function fetchAdminData(settings) {
   const roundRows = rounds || []
   const roundIds = [...getScoredRoundIds(roundRows, settings)]
   const [{ data: songs }, { data: votes }, { data: groups }, { data: groupSongs }, { data: roundGroups }] = await Promise.all([
-    roundScopedQuery('songs', SONG_WITH_PLAYER, roundIds, 'created_at'),
+    songsForRounds(roundIds),
     roundScopedQuery('votes', VOTE_FIELDS, roundIds),
     roundScopedQuery('duplicate_groups', DUPLICATE_GROUP_FIELDS, roundIds, 'created_at'),
     groupSongsForRounds(roundIds),

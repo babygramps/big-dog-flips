@@ -2,24 +2,29 @@ import { addDays, getCurrentMonday, normalizeTemplate } from './schedule.js'
 import { randomDogAvatarUrl } from './dogAvatars.js'
 import { supabase } from './supabase.js'
 import { SONG_SERVICES, songLinkError } from './songLinks.js'
-import { safeArtworkUrl } from './songArtwork.js'
+import { isMissingArtworkColumn, safeArtworkUrl } from './songArtwork.js'
 
 export async function saveSongSubmission({ roundId, playerId, form }) {
   const linkError = songLinkError(form)
   if (linkError) return { error: { message: linkError } }
-  const { error } = await supabase
-    .from('songs')
-    .upsert({
-      round_id: roundId,
-      player_id: playerId,
-      artist: form.artist.trim(),
-      title: form.title.trim(),
-      album: form.album.trim() || null,
-      link: form.link.trim() || null,
-      ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field]?.trim() || null])),
-      submitter_note: form.submitter_note.trim() || null,
-      artwork_url: safeArtworkUrl(form.artwork_url) || null,
-    }, { onConflict: 'round_id,player_id' })
+  const row = {
+    round_id: roundId,
+    player_id: playerId,
+    artist: form.artist.trim(),
+    title: form.title.trim(),
+    album: form.album.trim() || null,
+    link: form.link.trim() || null,
+    ...Object.fromEntries(SONG_SERVICES.map(({ field }) => [field, form[field]?.trim() || null])),
+    submitter_note: form.submitter_note.trim() || null,
+    artwork_url: safeArtworkUrl(form.artwork_url) || null,
+  }
+  const save = values => supabase.from('songs').upsert(values, { onConflict: 'round_id,player_id' })
+  let { error } = await save(row)
+  // Before the artwork migration is applied, save the song without its thumbnail.
+  if (isMissingArtworkColumn(error)) {
+    const { artwork_url: _artwork, ...withoutArtwork } = row
+    ;({ error } = await save(withoutArtwork))
+  }
 
   return { error }
 }

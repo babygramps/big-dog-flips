@@ -7,6 +7,12 @@ function sameText(a, b) {
   return normalized(a) !== '' && normalized(a) === normalized(b)
 }
 
+// Code can deploy before the artwork_url migration is applied. PostgREST then
+// rejects reads (42703) and writes (PGRST204) that name the column.
+export function isMissingArtworkColumn(error) {
+  return Boolean(error) && ['42703', 'PGRST204'].includes(error.code) && /artwork_url/.test(error.message || '')
+}
+
 export function artworkUrlError(value) {
   const url = clean(value)
   if (!url) return ''

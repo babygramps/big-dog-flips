@@ -125,6 +125,7 @@ Submitted songs get a cover-art thumbnail in `songs.artwork_url`, shown on the s
 - `src/lib/songArtwork.js` finds art from free, keyless catalogs: the iTunes Search API first, then Deezer. Only https URLs are kept.
 - Link lookups (`api/resolve-song.js`) use the provider's own art when it has one (Apple, Spotify, TIDAL), otherwise the catalogs, and fall back to the YouTube video thumbnail last.
 - On save, a song with no artwork asks `api/song-artwork.js` by artist, title, and album. Editing any of those clears the old art so a fresh one is found. A failed lookup never blocks a submission; the card just has no thumbnail.
+- Before the migration is applied, `src/lib/data.js` and `saveSongSubmission` retry without the column (`isMissingArtworkColumn`), so songs still load and save without thumbnails.
 - Cover art identifies the song, never the submitter, so it is safe during anonymous voting. A merged duplicate shows the canonical song's art, or any member's when it has none.
 
 ## Duplicate Rules
