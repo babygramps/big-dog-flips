@@ -401,3 +401,25 @@ export async function fetchAdminData(settings) {
     roundGroups: roundGroups || [],
   }
 }
+
+export async function fetchLateInviteSetup() {
+  const results = await Promise.all([
+    supabase.from('rounds').select(ROUND_FIELDS),
+    supabase.from('players').select(PLAYER_FIELDS).order('name'),
+    supabase.from('songs').select('round_id, player_id'),
+    supabase.from('late_submission_invites').select('*').order('created_at', { ascending: false }),
+  ])
+  for (const result of results) if (result.error) throw result.error
+  return Object.fromEntries(['rounds', 'players', 'songs', 'invites'].map((key, i) => [key, results[i].data]))
+}
+
+export async function fetchLateInvite(token) {
+  const { data, error } = await supabase.from('late_submission_invites')
+    .select('*, players(id, name, active), rounds(id, theme_name, theme_description)')
+    .eq('token', token).maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('This invite does not exist.')
+  const { data: rounds, error: roundsError } = await supabase.from('rounds').select(ROUND_FIELDS)
+  if (roundsError) throw roundsError
+  return { invite: data, rounds }
+}

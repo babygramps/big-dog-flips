@@ -301,3 +301,23 @@ export async function deleteDuplicateMerge(groupId) {
   const { error } = await supabase.from('duplicate_groups').delete().eq('id', groupId)
   return { error }
 }
+
+export async function createLateInvite(roundId, playerId) {
+  const { data, error } = await supabase.rpc('create_late_submission_invite', { p_round_id: roundId, p_player_id: playerId })
+  if (error) throw error
+  return data
+}
+
+export async function revokeLateInvite(id) {
+  const { error } = await supabase.rpc('revoke_late_submission_invite', { p_id: id })
+  if (error) throw error
+}
+
+export async function redeemLateInvite(token, { form }) {
+  const linkError = songLinkError(form)
+  if (linkError) return { error: { message: linkError } }
+  return supabase.rpc('redeem_late_submission_invite', {
+    p_token: token,
+    p_song: { ...form, artwork_url: safeArtworkUrl(form.artwork_url) || null },
+  })
+}

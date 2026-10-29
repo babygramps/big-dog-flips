@@ -17,6 +17,9 @@ import { isSupabaseConfigured, supabase } from './lib/supabase.js'
 import HomePage from './pages/HomePage.jsx'
 import Nav from './components/Nav.jsx'
 
+const LateInvitesPage = lazy(() => import('./pages/LateInvitesPage.jsx'))
+const LateSubmitPage = lazy(() => import('./pages/LateSubmitPage.jsx'))
+
 const AdminPage = lazy(loadAdminPage)
 const HowToPlayPage = lazy(loadHowToPlayPage)
 const JoinScreen = lazy(loadJoinScreen)
@@ -176,6 +179,21 @@ export default function App() {
         <p>Loading Big Dog Flips...</p>
       </main>
     )
+  }
+
+  // Invite routes intentionally bypass local player selection and have no navigation entry.
+  if (/^\/late-invites\/?$/.test(window.location.pathname) || window.location.pathname.startsWith('/late-submit/')) {
+    return <SettingsContext.Provider value={settingsContext}>
+      <BrowserRouter>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/late-invites" element={<LateInvitesPage />} />
+            <Route path="/late-submit/:token" element={<LateSubmitPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </SettingsContext.Provider>
   }
 
   if (!player) {

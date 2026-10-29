@@ -34,7 +34,7 @@ async function findArtwork({ artist, title, album }) {
   }
 }
 
-export default function SubmissionView({ round, player, songs, activePlayers, sides, mySide, onChanged }) {
+export default function SubmissionView({ round, player, songs, activePlayers, sides, mySide, onChanged, saveSubmission = saveSongSubmission, allowEditing = true, hideRoster = false }) {
   const mySong = songs.find(song => song.player_id === player.id)
   const [form, setForm] = useState(() => songFormValues(mySong))
   const [savedSong, setSavedSong] = useState(() => mySong ? songFormValues(mySong) : null)
@@ -123,7 +123,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
     let saveError
     try {
       if (!nextSong.artwork_url) nextSong.artwork_url = await findArtwork(nextSong)
-      const result = await saveSongSubmission({
+      const result = await saveSubmission({
         roundId: round.id,
         playerId: player.id,
         form: nextSong,
@@ -137,7 +137,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
 
     setSaving(false)
     if (saveError) {
-      setError('Could not save that song. Try again.')
+      setError(saveError.message || 'Could not save that song. Try again.')
       return
     }
 
@@ -174,8 +174,8 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
   ] : []
 
   return (
-    <section className="phase-layout">
-      <aside className="side-panel">
+    <section className="phase-layout" style={hideRoster ? { gridTemplateColumns: '1fr' } : undefined}>
+      {!hideRoster && <aside className="side-panel">
         {isSplit ? (
           <div className="voting-sides submission-voting-sides">
             {playersBySide.map(({ side, players: sidePlayers }) => {
@@ -207,7 +207,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
             />
           </>
         )}
-      </aside>
+      </aside>}
 
       <section className={`card submission-card ${savedSong && !editing ? 'is-saved' : 'is-editing'}`}>
         {savedSong && !editing ? (
@@ -250,10 +250,10 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
             )}
 
             <div className="submission-saved-footer">
-              <p>You can change this until voting starts.</p>
-              <button type="button" className="btn btn-secondary" onClick={startEditing}>
+              <p>{allowEditing ? 'You can change this until voting starts.' : 'Your late submission is saved. This link cannot be used again.'}</p>
+              {allowEditing && <button type="button" className="btn btn-secondary" onClick={startEditing}>
                 Edit submission
-              </button>
+              </button>}
             </div>
           </>
         ) : (

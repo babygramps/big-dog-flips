@@ -121,3 +121,23 @@ Phases change at midnight Pacific time.
 `20260921120000_allow_downvotes.sql` allows -1 vote rows. Apply this migration before deploying the voting UI that allows an optional downvote within the three-vote allowance. Existing ballots are preserved.
 
 `20261026120000_add_song_artwork.sql` adds `songs.artwork_url` for cover-art thumbnails. Until it is applied, the app loads and saves songs without thumbnails, so deploying first is safe. Existing songs keep working without a thumbnail.
+
+### Unlisted late submission invites
+
+Apply `20261029120000_late_submission_invites.sql` with the normal migration
+workflow before using `/late-invites`. This route has no navigation entry and
+requires no local player selection. Anyone who knows the URL can issue or revoke
+invites, consistent with the open-admin model; an unlisted URL is not authentication.
+
+During the current round's voting window, select an active player who has not
+submitted and copy their link. `/late-submit/:token` binds the submission to that
+player, regardless of the recipient's locally selected profile. Saving inserts a
+new song and consumes the invite in one transaction. It never overwrites a song.
+Existing side assignments are preserved; an unassigned player joins the smaller
+side when assignments exist. Links expire at the end of the voting window or
+round, whichever comes first, using Pacific time and the editable schedule.
+
+Existing votes are unchanged. Existing TuneMyMusic shares do not gain late songs;
+recipients must listen to those songs in the app. This feature does not tighten
+the existing public song-write policies. The new invite table allows public reads,
+with writes through the create, revoke, and redeem RPCs only.
