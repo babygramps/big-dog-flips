@@ -40,18 +40,30 @@ function readToken() {
   )
 }
 
+function refFromUrl(url) {
+  return url?.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]
+}
+
+// Environment variables win over the files, matching Vite, so containers and
+// CI runs without a .env.local still find the project.
 function readProjectRef() {
+  const envRef = refFromUrl(process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)
+  if (envRef) return envRef
+
   for (const file of ['.env.local', '.env']) {
     try {
       const text = readFileSync(join(ROOT, file), 'utf8')
       const url = text.match(/^(?:NEXT_PUBLIC_SUPABASE_URL|VITE_SUPABASE_URL)\s*=\s*(.+)$/m)?.[1]?.trim()
-      const ref = url?.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1]
+      const ref = refFromUrl(url)
       if (ref) return ref
     } catch {
       // try the next candidate
     }
   }
-  die('Could not determine the Supabase project ref.', 'Expected a SUPABASE_URL in .env.local.')
+  die(
+    'Could not determine the Supabase project ref.',
+    'Set VITE_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL in the environment or in .env.local.'
+  )
 }
 
 const TOKEN = readToken()

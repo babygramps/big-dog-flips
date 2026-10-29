@@ -25,7 +25,7 @@ This is intentionally a toy project. Keep the workflow lightweight:
 - `npm run db:plan` — dry run; reports pending migrations, changes nothing
 - `npm run db:deploy` — apply pending migrations
 
-The `db:*` scripts run `scripts/migrate.mjs`, which applies migrations through the Supabase Management API. It needs a personal access token in `SUPABASE_ACCESS_TOKEN` or `~/.muzak-supabase-token`, and reads the project ref out of the Supabase URL in `.env.local`. `db:link` and `db:push` still drive the Supabase CLI instead; both paths record versions in `supabase_migrations.schema_migrations`, so they stay interchangeable.
+The `db:*` scripts run `scripts/migrate.mjs`, which applies migrations through the Supabase Management API. It needs a personal access token in `SUPABASE_ACCESS_TOKEN` or `~/.muzak-supabase-token`, and reads the project ref out of the Supabase URL in the environment (`VITE_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_URL`), falling back to `.env.local`. `db:link` and `db:push` still drive the Supabase CLI instead; both paths record versions in `supabase_migrations.schema_migrations`, so they stay interchangeable.
 
 ## Deployment
 

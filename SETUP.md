@@ -38,7 +38,7 @@ npm run db:deploy   # apply pending migrations
 
 `scripts/migrate.mjs` applies each pending file in filename order and records it in `supabase_migrations.schema_migrations`, the same table the Supabase CLI uses, so `supabase db push` remains interchangeable with this script. A migration that fails stops the run and is not recorded, so re-running retries it.
 
-The script targets whichever project `VITE_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) in `.env.local` points at — it parses the ref out of that URL rather than taking a flag. Check that file before deploying against an unfamiliar checkout.
+The script targets whichever project `VITE_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) points at — it parses the ref out of that URL rather than taking a flag. An environment variable wins over `.env.local`, which is only read when neither is set. Check both before deploying against an unfamiliar checkout.
 
 Note that API keys — `anon`, `service_role`, `sb_publishable_`, `sb_secret_` — **cannot** run migrations. They authenticate to PostgREST, which exposes no DDL. Only a `sbp_` personal access token works here.
 
