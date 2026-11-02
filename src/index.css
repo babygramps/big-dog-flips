@@ -913,6 +913,12 @@ select:focus {
   background: var(--grape-soft);
 }
 
+/* Submitter notes keep the line breaks typed into the textarea. */
+.note,
+.submission-receipt-note {
+  white-space: pre-line;
+}
+
 .vote-control {
   display: inline-flex;
   align-items: center;
