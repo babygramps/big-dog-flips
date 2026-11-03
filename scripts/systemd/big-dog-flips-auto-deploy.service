@@ -1,0 +1,14 @@
+[Unit]
+Description=Deploy new Big Dog Flips main commits through Coolify
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=servy
+ExecStart=/usr/bin/python3 /home/servy/apps/big-dog-flips-auto-deploy.py
+TimeoutStartSec=100
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only

@@ -76,6 +76,9 @@ See [Testing](docs/testing.md) for structure, fixtures, conventions, and focused
 npm run build
 ```
 
+For the local Docker/Coolify deployment on serverdude, see
+[Local Coolify deployment](docs/coolify.md).
+
 ## Database Migrations
 
 Save a Supabase personal access token to `~/.muzak-supabase-token`, then:
