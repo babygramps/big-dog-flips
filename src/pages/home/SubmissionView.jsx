@@ -246,7 +246,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
             </div>
 
             {savedSong.submitter_note && (
-              <p className="submission-receipt-note">“{savedSong.submitter_note}”</p>
+              <p className="submission-receipt-note">{savedSong.submitter_note}</p>
             )}
 
             <div className="submission-saved-footer">

@@ -56,7 +56,7 @@ export default function AppreciationSongCard({
           </div>
         </div>
 
-        {submitterNote && <p className="note appreciation-note">“{submitterNote}”</p>}
+        {submitterNote && <p className="note appreciation-note">{submitterNote}</p>}
         {entry.isDuplicate && (
           <p className="merge-note appreciation-merge-note">
             {entry.votePoints} vote pts + {entry.courtesyPoints} courtesy pt{entry.courtesyPoints === 1 ? '' : 's'}
