@@ -5,6 +5,7 @@ import SongLinks from '../../components/SongLinks.jsx'
 import { groupLabel } from '../../lib/groups.js'
 import { saveSongSubmission } from '../../lib/mutations.js'
 import { SONG_SERVICES, songLinkError } from '../../lib/songLinks.js'
+import { applySongLookup } from '../../lib/submissionForm.js'
 
 function songFormValues(song) {
   return {
@@ -71,14 +72,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
   }
 
   function useLookup() {
-    setForm(current => ({
-      ...current,
-      artist: lookup.artist,
-      title: lookup.title,
-      album: lookup.album || current.album,
-      artwork_url: lookup.artwork_url || '',
-      ...Object.fromEntries(Object.entries(lookup.links).filter(([key, value]) => value && !current[key])),
-    }))
+    setForm(current => applySongLookup(current, lookup))
     setLookup(null)
     setLookupError('')
   }
