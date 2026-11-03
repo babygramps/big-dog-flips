@@ -1,8 +1,9 @@
 # Coolify deployment
 
 The app runs on serverdude (`10.0.0.130`), managed by Coolify at
-`http://10.0.0.130:8000`, under **My first project / production / Big Dog Flips**.
-Its resource UUID is `iyscpywxcaqzkehhkmqvbnxm`.
+`http://10.77.0.1:8000`, under **My first project / production / Big Dog Flips**.
+Its active resource UUID is `igmvbn44ajkknjou6g6eo4ib`. The original
+`iyscpywxcaqzkehhkmqvbnxm` resource is stopped and retained for rollback.
 The LAN app URL is `http://big-dog-flips.10.0.0.130.sslip.io`.
 
 ## Automatic updates
@@ -38,8 +39,10 @@ Git requires copying it to the installed path above.
 ## Build and runtime
 
 `server.js` serves the Vite build, SPA routes, `/healthz`, and all three API
-handlers on port 3000. The container retains the name `big-dog-flips` for the
-existing tunnel. Coolify provides `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+handlers on port 3000. The container is named `big-dog-flips-isolated` on destination `app-bigdog`,
+with network alias `big-dog-flips` for the existing tunnel. The tunnel joins
+only this application network. Coolify and its database/cache use the separate
+`sd-management` network; host rules block application access to management. Coolify provides `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
 and `VITE_GIPHY_API_KEY` at build time and runtime. These are public frontend
 values; never put privileged credentials in Docker build arguments. Local
 `.env*` files are excluded from Docker builds. `MUSICFETCH_TOKEN` is optional
@@ -50,3 +53,8 @@ Vercel's Git integration is disconnected so pushing main cannot replace that
 proxy. The temporary Cloudflare Quick Tunnel changes hostname if restarted;
 that still requires updating Vercel's proxy origin. Supabase remains hosted.
 No additional playlist scheduler is installed by this deployment setup.
+
+Infrastructure configuration and recovery instructions are on serverdude in
+`/etc/serverdude/`. Run `sudo systemctl start serverdude-isolation-check.service`
+to check network membership and management firewall presence. It also runs every
+five minutes; failures are logged to the system journal.

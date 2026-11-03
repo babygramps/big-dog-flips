@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import urllib.request
 
-APP = 'iyscpywxcaqzkehhkmqvbnxm'
+APP = 'igmvbn44ajkknjou6g6eo4ib'
 BASE = 'http://127.0.0.1:8000/api/v1'
 TOKEN = Path(os.environ.get('COOLIFY_TOKEN_FILE', '/home/servy/.config/big-dog-flips/coolify-token'))
 
