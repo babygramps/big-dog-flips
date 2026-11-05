@@ -10,7 +10,7 @@ import { indexCommentLikes, indexCommentsBySongId } from '../pages/home/homeUtil
 
 const EMPTY = { songs: [], comments: [], commentLikes: [], error: '' }
 
-export default function BonusSongs({ round, player, canSubmit = false, canVote = false, revealSongs = false, revealPlayers = false }) {
+export default function BonusSongs({ round, player, canSubmit = false, canVote = false, revealSongs = false, revealPlayers = false, embedded = false }) {
   const fetcher = useCallback(() => fetchBonusSongs(round.id), [round.id])
   const tables = useMemo(() => [{ table: 'bonus_songs', filter: `round_id=eq.${round.id}` },
     { table: 'bonus_comments', filter: `round_id=eq.${round.id}` }, 'bonus_comment_likes'], [round.id])
@@ -43,8 +43,8 @@ export default function BonusSongs({ round, player, canSubmit = false, canVote =
   }
 
   return (
-    <section className="phase-layout bonus-layout">
-      <section className="song-stack bonus-content">
+    <section className={embedded ? 'bonus-layout' : 'phase-layout bonus-layout'}>
+      <section className={`song-stack ${embedded ? '' : 'bonus-content'}`}>
       <header>
       <h2>Side B</h2>
       <p>Extra picks with unlimted votes because the points don't matter.</p>

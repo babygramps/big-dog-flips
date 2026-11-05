@@ -214,6 +214,14 @@ export default function HomePage() {
   const appreciationPlayers = sides.isSplit
     ? data.players.filter(row => sides.sideByPlayerId[row.id] === 0 || sides.sideByPlayerId[row.id] === 1)
     : activePlayers
+  const bonusSongs = (
+    <BonusSongs key={currentRound.id} round={currentRound} player={player}
+        embedded={context.phase === 'submission'}
+        canSubmit={context.phase === 'submission' && roundData.roundSongs.some(song => song.player_id === player.id)}
+        canVote={context.phase === 'voting'}
+        revealSongs={context.phase === 'voting' || context.phase === 'appreciation'}
+        revealPlayers={context.phase === 'appreciation'} />
+  )
 
   return (
     <main className="page">
@@ -250,6 +258,7 @@ export default function HomePage() {
               activePlayers={activePlayers}
               sides={sides}
               mySide={mySide}
+              afterSubmission={bonusSongs}
               onChanged={reload}
             />
           )}
@@ -302,11 +311,7 @@ export default function HomePage() {
           )}
         </Suspense>
       )}
-      <BonusSongs key={currentRound.id} round={currentRound} player={player}
-        canSubmit={context.phase === 'submission' && roundData.roundSongs.some(song => song.player_id === player.id)}
-        canVote={context.phase === 'voting'}
-        revealSongs={context.phase === 'voting' || context.phase === 'appreciation'}
-        revealPlayers={context.phase === 'appreciation'} />
+      {context.phase !== 'submission' && bonusSongs}
     </main>
   )
 }

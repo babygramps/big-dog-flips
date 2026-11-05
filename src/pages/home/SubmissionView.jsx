@@ -35,7 +35,7 @@ async function findArtwork({ artist, title, album }) {
   }
 }
 
-export default function SubmissionView({ round, player, songs, activePlayers, sides, mySide, onChanged, saveSubmission = saveSongSubmission, allowEditing = true, hideRoster = false }) {
+export default function SubmissionView({ round, player, songs, activePlayers, sides, mySide, onChanged, saveSubmission = saveSongSubmission, allowEditing = true, hideRoster = false, afterSubmission = null }) {
   const lookupInputId = useId()
   const mySong = songs.find(song => song.player_id === player.id)
   const [form, setForm] = useState(() => songFormValues(mySong))
@@ -204,6 +204,7 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
         )}
       </aside>}
 
+      <div className="submission-content">
       <section className={`card submission-card ${savedSong && !editing ? 'is-saved' : 'is-editing'}`}>
         {savedSong && !editing ? (
           <>
@@ -347,6 +348,8 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
           </>
         )}
       </section>
+      {afterSubmission}
+      </div>
     </section>
   )
 }
