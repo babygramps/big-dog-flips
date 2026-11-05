@@ -32,15 +32,19 @@ function splitRound() {
 
 function memoryStore(league) {
   const saved = []
+  const savedBonus = []
   return {
-    saved,
+    saved, savedBonus,
     loadSchedule: async () => ({ settings: league.settings, rounds: league.rounds }),
     loadRound: async roundId => ({
       songs: league.songs.filter(song => song.round_id === roundId),
+      bonusSongs: (league.bonusSongs || []).filter(song => song.round_id === roundId),
+      bonusPlaylists: [...(league.bonusPlaylists || []), ...savedBonus].filter(row => row.round_id === roundId),
       roundGroups: league.roundGroups.filter(row => row.round_id === roundId),
       playlists: league.playlists.filter(row => row.round_id === roundId),
     }),
     savePlaylist: async row => { saved.push(row) },
+    saveBonusPlaylist: async row => { savedBonus.push(row) },
   }
 }
 
@@ -55,6 +59,70 @@ function fakeShares({ failTitle = null } = {}) {
 }
 
 describe('syncTuneMyMusicPlaylists', () => {
+  it('generates a separate extras playlist on the submission-closing night', async () => {
+    const league = splitRound()
+    league.roundGroups = []
+    league.bonusSongs = [makeSong({ id: 'extra-1', title: 'Bonus rain' }), makeSong({ id: 'extra-2', title: 'Another extra' })]
+    const store = memoryStore(league)
+    const shares = fakeShares()
+    const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: THURSDAY, trigger: 'nightly' })
+    assert.equal(result.created.length, 2)
+    assert.deepEqual([...shares.made[0].songs].sort(), ['Only Happy When It Rains', 'Purple Rain', 'Umbrella'])
+    assert.equal(shares.made[1].title, 'Big Dog Flips · Rain · Side B · Extra picks')
+    assert.deepEqual([...shares.made[1].songs].sort(), ['Another extra', 'Bonus rain'])
+    assert.equal(store.saved.length, 1)
+    assert.deepEqual(store.savedBonus, [{ round_id: 'round-a', group_index: 0, service: 'TuneMyMusic', url: 'https://www.tunemymusic.com/share/share-2' }])
+  })
+
+  it('does not confuse the legacy Side B voting playlist with the extras playlist', async () => {
+    const league = splitRound()
+    league.bonusSongs = [makeSong({ id: 'extra', title: 'Bonus rain' })]
+    league.playlists = [0, 1].map(group_index => ({ round_id: 'round-a', group_index, service: 'TuneMyMusic', url: `https://example.com/${group_index}` }))
+    const store = memoryStore(league)
+    const shares = fakeShares()
+    await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: FRIDAY })
+    await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: SUNDAY })
+    assert.equal(shares.made.length, 1)
+    assert.deepEqual(shares.made[0].songs, ['Bonus rain'])
+    assert.equal(store.saved.length, 0)
+    assert.equal(store.savedBonus.length, 1)
+  })
+
+  it('waits until submission closes before generating extra-song shares', async () => {
+    const league = splitRound()
+    league.bonusSongs = [makeSong({ id: 'extra' })]
+    const shares = fakeShares()
+    for (const trigger of ['manual', 'nightly']) {
+      const result = await syncTuneMyMusicPlaylists({ store: memoryStore(league), createShare: shares.createShare, now: TUESDAY, trigger })
+      assert.equal(result.status, 'not-ready')
+    }
+    assert.equal(shares.made.length, 0)
+  })
+
+  it('keeps regular shares when creating the extra-song share fails', async () => {
+    const league = splitRound()
+    league.roundGroups = []
+    league.bonusSongs = [makeSong({ id: 'extra' })]
+    const store = memoryStore(league)
+    const shares = fakeShares({ failTitle: 'Big Dog Flips · Rain · Side B · Extra picks' })
+    const result = await syncTuneMyMusicPlaylists({ store, createShare: shares.createShare, now: THURSDAY })
+    assert.equal(store.saved.length, 1)
+    assert.equal(store.savedBonus.length, 0)
+    assert.deepEqual(result.failed, [{ groupIndex: 1, error: 'TuneMyMusic refused the song upload (401).' }])
+  })
+
+  it('uses a stable extras shuffle and can create extras when nobody submitted to regular voting', async () => {
+    const league = splitRound()
+    league.songs = []
+    league.bonusSongs = [makeSong({ id: 'extra-1', title: 'One' }), makeSong({ id: 'extra-2', title: 'Two' })]
+    const forward = fakeShares(), backward = fakeShares()
+    await syncTuneMyMusicPlaylists({ store: memoryStore(league), createShare: forward.createShare, now: THURSDAY })
+    league.bonusSongs.reverse()
+    await syncTuneMyMusicPlaylists({ store: memoryStore(league), createShare: backward.createShare, now: THURSDAY })
+    assert.equal(forward.made.length, 1)
+    assert.deepEqual(backward.made[0].songs, forward.made[0].songs)
+  })
+
   it('makes one share per side the night submission ends, each holding only that side’s songs', async () => {
     const store = memoryStore(splitRound())
     const shares = fakeShares()

@@ -426,17 +426,19 @@ export async function fetchLateInvite(token) {
 
 // Extra songs have their own table: vote and duplicate foreign keys cannot reference them.
 export async function fetchBonusSongs(roundId) {
-  const [songsResult, commentsResult, likesResult] = await Promise.all([
+  const [songsResult, commentsResult, likesResult, playlistsResult] = await Promise.all([
     supabase.from('bonus_songs').select(SONG_WITH_PLAYER).eq('round_id', roundId).order('created_at'),
     supabase.from('bonus_comments').select(`${COMMENT_FIELDS}, players!bonus_comments_player_id_fkey(${PLAYER_EMBED_FIELDS})`)
       .eq('round_id', roundId).order('created_at'),
     supabase.from('bonus_comment_likes').select('comment_id, player_id, bonus_comments!inner(round_id)')
       .eq('bonus_comments.round_id', roundId),
+    supabase.from('bonus_playlists').select(PLAYLIST_FIELDS).eq('round_id', roundId).order('created_at'),
   ])
   return {
     songs: songsResult.data || [], comments: commentsResult.data || [],
     commentLikes: withoutJoin(likesResult.data, 'bonus_comments'),
-    error: [songsResult, commentsResult, likesResult].find(result => result.error)?.error.message || '',
+    playlists: playlistsResult.data || [],
+    error: [songsResult, commentsResult, likesResult, playlistsResult].find(result => result.error)?.error.message || '',
   }
 }
 

@@ -157,8 +157,8 @@ viewers poll shared totals every three seconds. Refreshing does not clear them;
 restarting/deploying the server does, and each round's totals expire seven days
 after its first vote. This requires one shared server process (the Coolify setup);
 independent serverless instances would have separate counters. No database or
-browser storage is used for votes. Extras do not enter saved votes, duplicate merges, standings, or the
-existing TuneMyMusic shares. Like other submissions, writes use the project's
+browser storage is used for votes. Extras do not enter saved votes, duplicate merges, or standings. Their generated
+TuneMyMusic share is separate from regular voting. Like other submissions, writes use the project's
 open public access model; the submission deadline is enforced by the UI.
 
 Apply `20261105032928_bonus_song_comments.sql` for Side B discussions and comment
@@ -172,3 +172,12 @@ Side B's per-song shared vote totals remain visible during appreciation and in
 round history while the server still holds them. The badge says votes rather than
 points. Vote controls remain available only during voting. These totals remain
 temporary and never contribute to player scores or standings.
+
+Apply `20261105040437_bonus_song_playlists.sql` for Side B shared playlists.
+The existing nightly `/api/round-playlists` run generates a separate extras-only
+TuneMyMusic share when submission closes, with the same fixed per-round shuffle
+and no submitter information. The admin button fills missing regular or extra
+shares during voting or appreciation. Empty extras are skipped and existing
+TuneMyMusic links are preserved. Side B's Shared playlists panel supports the
+same add/edit/remove controls and realtime updates as regular voting. Its links
+are stored in `bonus_playlists`, separate from legacy split voting pools.

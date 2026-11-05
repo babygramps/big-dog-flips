@@ -32,6 +32,18 @@ function sideJobs({ round, settings, songs, roundGroups, playlists }) {
     .filter(job => job.songs.length > 0)
 }
 
+function bonusJob({ round, settings, bonusSongs, bonusPlaylists }) {
+  if (!bonusSongs.length || bonusPlaylists.some(row => row.service === TUNEMYMUSIC_SERVICE)) return []
+  const leagueName = settings?.league_name || 'Big Dog Flips'
+  return [{
+    side: 1,
+    bonus: true,
+    title: `${leagueName} · ${round.theme_name} · Side B · Extra picks`,
+    username: leagueName,
+    songs: listeningOrderFor(bonusSongs, { roundId: round.id, playerId: 'tunemymusic-share' }),
+  }]
+}
+
 // The nightly job (trigger 'nightly') and the admin button (trigger 'manual') both
 // call this. It only adds links that are missing, so running it again is harmless.
 export async function syncTuneMyMusicPlaylists({ store, createShare, now = new Date(), trigger = 'manual' }) {
@@ -41,14 +53,20 @@ export async function syncTuneMyMusicPlaylists({ store, createShare, now = new D
   const ready = trigger === 'nightly' ? submissionEndedLastMidnight(settings, context) : SHARE_PHASES.has(context.phase)
   if (!round || !ready) return { status: 'not-ready', created: [], failed: [] }
 
-  const { songs, roundGroups, playlists } = await store.loadRound(round.id)
+  const { songs, roundGroups, playlists, bonusSongs = [], bonusPlaylists = [] } = await store.loadRound(round.id)
   const created = []
   const failed = []
 
-  for (const job of sideJobs({ round, settings, songs, roundGroups, playlists })) {
+  const jobs = [
+    ...sideJobs({ round, settings, songs, roundGroups, playlists }),
+    ...bonusJob({ round, settings, bonusSongs, bonusPlaylists }),
+  ]
+  for (const job of jobs) {
     try {
       const { url } = await createShare({ title: job.title, username: job.username, songs: job.songs })
-      await store.savePlaylist({ round_id: round.id, group_index: job.side, service: TUNEMYMUSIC_SERVICE, url })
+      const row = { round_id: round.id, group_index: job.bonus ? 0 : job.side, service: TUNEMYMUSIC_SERVICE, url }
+      if (job.bonus) await store.saveBonusPlaylist(row)
+      else await store.savePlaylist(row)
       created.push({ groupIndex: job.side, url })
     } catch (error) {
       failed.push({ groupIndex: job.side, error: error.message })

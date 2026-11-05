@@ -31,12 +31,18 @@ function supabaseStore(env = process.env) {
       return { settings: settings || null, rounds }
     },
     async loadRound(roundId) {
-      const [songs, roundGroups, playlists] = await Promise.all([
+      const [songs, roundGroups, playlists, bonusSongs, bonusPlaylists] = await Promise.all([
         rows(db.from('songs').select('id, round_id, player_id, artist, title, album').eq('round_id', roundId), 'Could not load the songs.'),
         rows(db.from('round_groups').select('round_id, player_id, group_index').eq('round_id', roundId), 'Could not load the sides.'),
         rows(db.from('round_playlists').select('round_id, group_index, service, url').eq('round_id', roundId), 'Could not load the playlists.'),
+        rows(db.from('bonus_songs').select('id, round_id, artist, title, album').eq('round_id', roundId), 'Could not load Side B songs.'),
+        rows(db.from('bonus_playlists').select('round_id, service, url').eq('round_id', roundId), 'Could not load Side B playlists.'),
       ])
-      return { songs, roundGroups, playlists }
+      return { songs, roundGroups, playlists, bonusSongs, bonusPlaylists }
+    },
+    async saveBonusPlaylist(row) {
+      const { error } = await db.from('bonus_playlists').insert(row)
+      if (error) throw new Error('Made the Side B share but could not save its link.')
     },
     async savePlaylist(row) {
       const { error } = await db.from('round_playlists').insert(row)

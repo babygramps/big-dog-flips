@@ -39,7 +39,7 @@ export function createPreviewDatabase() {
     comments: [{ id: id(500), round_id: round.id, song_id: songs[1].id, player_id: players[2].id, body: 'That opening bass line gets me every time.', created_at: '2026-01-01T12:00:00Z' }],
     bonus_comments: [{ id: id(501), round_id: round.id, song_id: id(300), player_id: players[2].id,
       body: 'The saxophone outro is the perfect way to end a drive.\nGreat bonus pick.', created_at: '2026-01-01T12:00:00Z' }],
-    bonus_comment_likes: [],
+    bonus_comment_likes: [], bonus_playlists: [],
     comment_likes: [], round_groups: [], duplicate_groups: [], duplicate_group_songs: [], round_playlists: [],
   }
   for (const song of [...rows.songs, ...rows.bonus_songs]) {

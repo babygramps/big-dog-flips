@@ -3,17 +3,19 @@ import useRealtimeData from '../hooks/useRealtimeData.js'
 import { fetchBonusSongs, fetchBonusVotes } from '../lib/data.js'
 import { addBonusVote, deleteBonusSong, saveSongSubmission } from '../lib/mutations.js'
 import SubmissionView from '../pages/home/SubmissionView.jsx'
+import PlaylistPanel from '../pages/home/PlaylistPanel.jsx'
 import VotingSongCard from '../pages/home/VotingSongCard.jsx'
 import AppreciationSongCard from '../pages/home/AppreciationSongCard.jsx'
 import { anonymousNameFor } from '../lib/anonymousNames.js'
 import { indexCommentLikes, indexCommentsBySongId } from '../pages/home/homeUtils.js'
 
-const EMPTY = { songs: [], comments: [], commentLikes: [], error: '' }
+const EMPTY = { songs: [], comments: [], commentLikes: [], playlists: [], error: '' }
 
 export default function BonusSongs({ round, player, canSubmit = false, canVote = false, revealSongs = false, revealPlayers = false, embedded = false }) {
   const fetcher = useCallback(() => fetchBonusSongs(round.id), [round.id])
   const tables = useMemo(() => [{ table: 'bonus_songs', filter: `round_id=eq.${round.id}` },
-    { table: 'bonus_comments', filter: `round_id=eq.${round.id}` }, 'bonus_comment_likes'], [round.id])
+    { table: 'bonus_comments', filter: `round_id=eq.${round.id}` }, 'bonus_comment_likes',
+    { table: 'bonus_playlists', filter: `round_id=eq.${round.id}` }], [round.id])
   const { data, loading, reload } = useRealtimeData({
     cacheKey: `bonus-songs:${round.id}`, channelName: `bonus-songs:${round.id}`,
     fetcher, initialData: EMPTY, tables,
@@ -54,6 +56,7 @@ export default function BonusSongs({ round, player, canSubmit = false, canVote =
       {voteError && <p role="alert">{voteError}</p>}
       {(data.error || error) && <p role="alert">{data.error || error}</p>}
       {!loading && !data.error && visibleSongs.length === 0 && <p className="muted">{revealSongs ? 'No extra songs yet.' : 'You haven’t added any extra songs yet.'}</p>}
+      {revealSongs && <PlaylistPanel playlists={data.playlists || []} roundId={round.id} side={0} bonus onChanged={reload} />}
       <div className="song-stack">
         {visibleSongs.map(song => revealPlayers ? (
           <AppreciationSongCard key={song.id}

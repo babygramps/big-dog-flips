@@ -32,7 +32,7 @@ export default function PlaylistLinksTool() {
         {message && <span className={isError ? 'error-msg' : 'success-msg'}>{message}</span>}
       </div>
       <p className="muted">
-        The night submissions close, every side gets a TuneMyMusic link in its Shared playlists box, so anyone can import the round into their own music app. That run does not retry, so use this if a link is missing.
+        The night submissions close, regular voting and Side B extras each get a TuneMyMusic link in its Shared playlists box, so anyone can import the round into their own music app. That run does not retry, so use this if a link is missing.
       </p>
       <button type="button" className="btn btn-secondary" onClick={makeLinks} disabled={working}>
         {working ? 'Making links...' : 'Make playlist links now'}

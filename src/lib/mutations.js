@@ -111,8 +111,8 @@ export async function toggleCommentLike({ commentId, playerId, liked, bonus = fa
   return { error }
 }
 
-export async function addRoundPlaylist({ roundId, groupIndex, service, url }) {
-  const { error } = await supabase.from('round_playlists').insert({
+export async function addRoundPlaylist({ roundId, groupIndex, service, url, bonus = false }) {
+  const { error } = await supabase.from(bonus ? 'bonus_playlists' : 'round_playlists').insert({
     round_id: roundId,
     group_index: groupIndex,
     service: service.trim() || 'Playlist',
@@ -122,8 +122,8 @@ export async function addRoundPlaylist({ roundId, groupIndex, service, url }) {
   return { error }
 }
 
-export async function deleteRoundPlaylist(playlistId) {
-  const { error } = await supabase.from('round_playlists').delete().eq('id', playlistId)
+export async function deleteRoundPlaylist(playlistId, { bonus = false } = {}) {
+  const { error } = await supabase.from(bonus ? 'bonus_playlists' : 'round_playlists').delete().eq('id', playlistId)
   return { error }
 }
 

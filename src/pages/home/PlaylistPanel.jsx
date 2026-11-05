@@ -4,7 +4,7 @@ import { addRoundPlaylist, deleteRoundPlaylist } from '../../lib/mutations.js'
 import { serviceLabelForUrl } from '../../lib/songLinks.js'
 
 // Voting and appreciation pass the active side so its shared playlist can be curated in either phase.
-export default function PlaylistPanel({ playlists, roundId, side = null, showSides = false, onChanged }) {
+export default function PlaylistPanel({ playlists, roundId, side = null, showSides = false, onChanged, bonus = false }) {
   const canEdit = side === 0 || side === 1
   const [isEditing, setIsEditing] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -25,6 +25,7 @@ export default function PlaylistPanel({ playlists, roundId, side = null, showSid
     setError('')
     const { error: saveError } = await addRoundPlaylist({
       roundId,
+      bonus,
       groupIndex: side,
       service: serviceLabelForUrl(url),
       url,
@@ -40,7 +41,7 @@ export default function PlaylistPanel({ playlists, roundId, side = null, showSid
   }
 
   async function removePlaylist(playlistId) {
-    const { error: deleteError } = await deleteRoundPlaylist(playlistId)
+    const { error: deleteError } = await deleteRoundPlaylist(playlistId, { bonus })
     if (deleteError) {
       setError('Could not remove this playlist.')
       return
