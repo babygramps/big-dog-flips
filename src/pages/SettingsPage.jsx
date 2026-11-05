@@ -9,7 +9,6 @@ import {
   fetchAdminSummaryData,
 } from '../lib/data.js'
 import { saveLeagueSettings } from '../lib/mutations.js'
-import { MIN_PLAYERS_TO_SPLIT } from '../lib/groups.js'
 import {
   DEFAULT_WEEKLY_TEMPLATE,
   getCurrentMonday,
@@ -137,20 +136,7 @@ export default function AdminPage() {
                 </label>
               </div>
 
-              <label>
-                <span>Round sides</span>
-                <select
-                  value={form.b_sides_enabled ? 'two' : 'one'}
-                  onChange={event => setForm(f => ({ ...f, b_sides_enabled: event.target.value === 'two' }))}
-                  aria-describedby="round-sides-help"
-                >
-                  <option value="one">Side A only</option>
-                  <option value="two">Enable Side B</option>
-                </select>
-              </label>
-              <p id="round-sides-help" className="muted">
-                Side A only keeps everyone in one voting pool. Enabling Side B splits rounds with at least {MIN_PLAYERS_TO_SPLIT} active players into two balanced sides. Rounds already split keep their sides.
-              </p>
+              <p className="muted">Side B is open to everyone for extra songs. Votes on these songs are unlimited and just for fun; they never count toward player scores. Existing split rounds keep their original voting pools.</p>
 
               <ScheduleEditor
                 template={form.weekly_phase_template}

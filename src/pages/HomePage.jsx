@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import BonusSongs from '../components/BonusSongs.jsx'
 import Countdown from '../components/Countdown.jsx'
 import { usePlayer, useSettings } from '../App.jsx'
 import useRealtimeData from '../hooks/useRealtimeData.js'
@@ -11,8 +12,8 @@ import {
   homeRoundRealtimeTables,
   HOME_CORE_REALTIME_TABLES,
 } from '../lib/data.js'
-import { buildRoundGroupAssignment, shouldSplitRound, sideOf, sidesForRound } from '../lib/groups.js'
-import { assignRoundGroups, joinRoundGroup } from '../lib/mutations.js'
+import { sideOf, sidesForRound } from '../lib/groups.js'
+import { joinRoundGroup } from '../lib/mutations.js'
 import { formatPacificDate, formatPhaseDateRange, getLeagueContext, getRoundTiming, phaseForDate } from '../lib/schedule.js'
 
 const phaseLoaders = {
@@ -91,37 +92,24 @@ export default function HomePage() {
   )
   const mySide = sideOf(sides, player.id)
 
-  // The sides for a round are written once, by whoever opens the app first after it goes live.
-  // The RPC is first-writer-wins, so a race between two clients cannot produce two splits.
+  // Preserve legacy split rounds and place late joiners in their original voting model.
   const settledRoundsRef = useRef(new Set())
   useEffect(() => {
     // Time travel is for inspecting existing rounds, never for mutating their assignments.
     if (dayOffset !== 0 || loading || !currentRound) return
 
     const roundId = currentRound.id
-    const needsAssignment = !sides.isSplit && shouldSplitRound(activePlayers.length, settings?.b_sides_enabled)
     const needsJoin = sides.isSplit && mySide === null
-    if (!needsAssignment && !needsJoin) return
+    if (!needsJoin) return
 
-    const attemptKey = `${roundId}:${needsAssignment ? 'assign' : 'join'}:${activePlayers.length}`
+    const attemptKey = `${roundId}:join:${activePlayers.length}`
     if (settledRoundsRef.current.has(attemptKey)) return
     settledRoundsRef.current.add(attemptKey)
 
     let cancelled = false
 
     async function settleSides() {
-      if (needsAssignment) {
-        const assignments = buildRoundGroupAssignment({
-          roundId,
-          activePlayers,
-          bSidesEnabled: settings?.b_sides_enabled,
-          priorGroupRows: data.roundGroups.filter(row => row.round_id !== roundId),
-        })
-        if (!assignments) return
-        await assignRoundGroups({ roundId, assignments })
-      } else {
-        await joinRoundGroup({ roundId, playerId: player.id })
-      }
+      await joinRoundGroup({ roundId, playerId: player.id })
 
       if (!cancelled) reloadCore()
     }
@@ -314,6 +302,11 @@ export default function HomePage() {
           )}
         </Suspense>
       )}
+      <BonusSongs key={currentRound.id} round={currentRound} player={player}
+        canSubmit={context.phase === 'submission' && roundData.roundSongs.some(song => song.player_id === player.id)}
+        canVote={context.phase === 'voting'}
+        revealSongs={context.phase === 'voting' || context.phase === 'appreciation'}
+        revealPlayers={context.phase === 'appreciation'} />
     </main>
   )
 }

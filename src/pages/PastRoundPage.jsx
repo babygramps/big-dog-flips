@@ -1,3 +1,4 @@
+import BonusSongs from '../components/BonusSongs.jsx'
 import { useCallback, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePlayer, useSettings } from '../App.jsx'
@@ -115,6 +116,7 @@ export default function PastRoundPage() {
         sides={sides}
         onChanged={reload}
       />
+      <BonusSongs key={round.id} round={round} player={player} revealSongs revealPlayers />
     </main>
   )
 }

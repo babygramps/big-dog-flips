@@ -5,7 +5,8 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.
 
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
 
-export const supabase = createClient(
+// The dev-only preview installs an in-memory client before loading the app.
+export const supabase = (import.meta.env.DEV && typeof window !== 'undefined' && window.__BDF_PREVIEW__?.client) || createClient(
   SUPABASE_URL || 'https://example.supabase.co',
   SUPABASE_ANON_KEY || 'missing-anon-key',
   {

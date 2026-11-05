@@ -39,7 +39,7 @@ export default function HowToPlayPage() {
           <h2>A few things to know</h2>
           <ul>
             <li>Check Home for deadlines. All times are Pacific.</li>
-            <li>If the round has two sides, vote only on yours. You can still listen and comment on the other side.</li>
+            <li>Submit one song for scoring. Once it is saved, add extra songs to Side B during submission. Side B songs become visible when voting starts. Give them unlimited votes for fun; totals are visible to everyone, reset when the server restarts, expire after a week, and never count toward scores or standings.</li>
             <li>Song submitters stay hidden during voting. Comments use aliases, but profile photos stay visible.</li>
             <li>If matching songs are merged after voting, their scores are combined, votes from their submitters are removed, and one bonus point is added per extra submitter. Each submitter gets that score.</li>
           </ul>

@@ -141,3 +141,34 @@ Existing votes are unchanged. Existing TuneMyMusic shares do not gain late songs
 recipients must listen to those songs in the app. This feature does not tighten
 the existing public song-write policies. The new invite table allows public reads,
 with writes through the create, revoke, and redeem RPCs only.
+
+### Unscored Side B extras
+
+Apply `20261105030233_bonus_songs.sql` before using Side B extras. It adds
+`bonus_songs` with public access and realtime updates, and prevents new player
+splits. Existing split assignments and scores are preserved. Each player still
+has one scored submission; after saving it, they may add multiple Side B songs
+during submission. Extras can be edited or removed until voting starts. They
+are visible only to their submitter until voting starts, then available to everyone
+on Home and in round history, with submitters revealed during
+appreciation. During voting, Side B has unlimited temporary upvotes and downvotes
+held only in the standalone app server's memory, without player identities. All
+viewers poll shared totals every three seconds. Refreshing does not clear them;
+restarting/deploying the server does, and each round's totals expire seven days
+after its first vote. This requires one shared server process (the Coolify setup);
+independent serverless instances would have separate counters. No database or
+browser storage is used for votes. Extras do not enter saved votes, duplicate merges, standings, or the
+existing TuneMyMusic shares. Like other submissions, writes use the project's
+open public access model; the submission deadline is enforced by the UI.
+
+Apply `20261105032928_bonus_song_comments.sql` for Side B discussions and comment
+likes. Side A and Side B use the same voting and appreciation card components,
+including cover artwork, multiline submitter notes, anonymous voting comments,
+GIFs, comment likes/deletion, and revealed authors with profile photos on Sunday.
+Side B uses the same submission form, link resolver, and catalog artwork lookup.
+Its comments are stored separately so they do not contribute to scored-song awards.
+
+Side B's per-song shared vote totals remain visible during appreciation and in
+round history while the server still holds them. The badge says votes rather than
+points. Vote controls remain available only during voting. These totals remain
+temporary and never contribute to player scores or standings.

@@ -2,12 +2,14 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { dirname, extname, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import bonusVotes from './api/bonus-votes.js'
 import resolveSong from './api/resolve-song.js'
 import songArtwork from './api/song-artwork.js'
 import roundPlaylists from './api/round-playlists.js'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const routes = {
+  '/api/bonus-votes': bonusVotes,
   '/api/resolve-song': resolveSong,
   '/api/song-artwork': songArtwork,
   '/api/round-playlists': roundPlaylists,

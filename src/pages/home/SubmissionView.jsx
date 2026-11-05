@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import SideRoster from '../../components/SideRoster.jsx'
 import SongArtwork from '../../components/SongArtwork.jsx'
 import SongLinks from '../../components/SongLinks.jsx'
@@ -36,6 +36,7 @@ async function findArtwork({ artist, title, album }) {
 }
 
 export default function SubmissionView({ round, player, songs, activePlayers, sides, mySide, onChanged, saveSubmission = saveSongSubmission, allowEditing = true, hideRoster = false }) {
+  const lookupInputId = useId()
   const mySong = songs.find(song => song.player_id === player.id)
   const [form, setForm] = useState(() => songFormValues(mySong))
   const [savedSong, setSavedSong] = useState(() => mySong ? songFormValues(mySong) : null)
@@ -258,9 +259,9 @@ export default function SubmissionView({ round, player, songs, activePlayers, si
             </div>
 
             <form className="song-lookup" onSubmit={findSong}>
-              <label htmlFor="song-lookup-url">Paste a song link to fill in the details</label>
+              <label htmlFor={lookupInputId}>Paste a song link to fill in the details</label>
               <div className="song-lookup-row">
-                <input id="song-lookup-url" type="url" value={lookupUrl} onChange={event => { ++lookupRequest.current; setLookingUp(false); setLookupUrl(event.target.value); setLookup(null); setLookupError('') }} placeholder="Spotify, YouTube Music, Apple Music, or TIDAL" required />
+                <input id={lookupInputId} type="url" value={lookupUrl} onChange={event => { ++lookupRequest.current; setLookingUp(false); setLookupUrl(event.target.value); setLookup(null); setLookupError('') }} placeholder="Spotify, YouTube Music, Apple Music, or TIDAL" required />
                 <button type="submit" className="btn btn-secondary" disabled={lookingUp || saving}>{lookingUp ? 'Finding…' : 'Find song'}</button>
               </div>
               {lookupError && <p className="submission-feedback is-error" role="alert">{lookupError}</p>}

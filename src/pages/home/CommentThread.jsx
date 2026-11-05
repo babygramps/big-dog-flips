@@ -6,7 +6,7 @@ import { indexCommentLikes } from './homeUtils.js'
 
 const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY
 
-export default function CommentThread({ comments, commentLikes = [], commentLikesIndex = null, player, revealAuthors, anonymousLabelFor, songId, roundId, onChanged, compact = false }) {
+export default function CommentThread({ comments, commentLikes = [], commentLikesIndex = null, player, revealAuthors, anonymousLabelFor, songId, roundId, onChanged, compact = false, bonus = false }) {
   const [body, setBody] = useState('')
   const [gif, setGif] = useState(null)
   const [gifPickerOpen, setGifPickerOpen] = useState(false)
@@ -29,6 +29,7 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
     const { error: insertError } = await saveComment({
       roundId,
       songId,
+      bonus,
       playerId: player.id,
       body: trimmed,
       gifUrl: gif?.url,
@@ -57,7 +58,7 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
     const liked = likes.some(like => like.player_id === player.id)
     setLikingCommentId(commentId)
     setError('')
-    const { error: likeError } = await toggleCommentLike({ commentId, playerId: player.id, liked })
+    const { error: likeError } = await toggleCommentLike({ commentId, playerId: player.id, liked, bonus })
     setLikingCommentId(null)
     if (likeError) {
       setError('Could not update like.')
@@ -71,7 +72,7 @@ export default function CommentThread({ comments, commentLikes = [], commentLike
 
     setDeletingCommentId(commentId)
     setError('')
-    const { error: deleteError } = await removeComment({ commentId, playerId: player.id })
+    const { error: deleteError } = await removeComment({ commentId, playerId: player.id, bonus })
     setDeletingCommentId(null)
     if (deleteError) {
       setError('Could not delete comment.')

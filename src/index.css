@@ -647,6 +647,14 @@ select:focus {
   align-items: start;
 }
 
+.bonus-layout {
+  margin-top: 2rem;
+}
+
+.bonus-content {
+  grid-column: 2;
+}
+
 .phase-layout > *,
 .song-stack,
 .song-card,
@@ -3498,6 +3506,10 @@ select:focus {
 }
 
 @media (max-width: 860px) {
+  .bonus-content {
+    grid-column: 1;
+  }
+
   h1 {
     font-size: 2.15rem;
   }

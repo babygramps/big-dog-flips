@@ -1,11 +1,15 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import songArtworkHandler from './api/song-artwork.js'
+import bonusVotesHandler from './api/bonus-votes.js'
 import resolveSongHandler from './api/resolve-song.js'
 import roundPlaylistsHandler from './api/round-playlists.js'
 
 // Vercel runs api/ as serverless functions. The dev server mounts the same handlers
 // so they work locally, with Vercel's req.body, res.status() and res.json() shims.
 const API_ROUTES = {
+  '/api/song-artwork': songArtworkHandler,
+  '/api/bonus-votes': bonusVotesHandler,
   '/api/resolve-song': resolveSongHandler,
   '/api/round-playlists': roundPlaylistsHandler,
 }

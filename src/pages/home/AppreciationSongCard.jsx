@@ -16,6 +16,9 @@ export default function AppreciationSongCard({
   context = null,
   className = '',
   submitterNote = entry.submitter_note,
+  showScore = true,
+  bonusVotes = null,
+  bonus = false,
 }) {
   const entryComments = commentsForEntry(comments, entry, commentsBySongId)
 
@@ -38,10 +41,12 @@ export default function AppreciationSongCard({
             <SongLinks song={entry} className="appreciation-song-actions" />
           </div>
 
-          <div className="score-badge" aria-label={`${entry.totalPoints} point${entry.totalPoints === 1 ? '' : 's'}`}>
-            <strong>{entry.totalPoints}</strong>
-            <span>points</span>
-          </div>
+          {(showScore || bonusVotes !== null) && <div className="score-badge"
+            aria-label={showScore ? `${entry.totalPoints} points` : `${bonusVotes} shared Side B votes, just for fun`}
+            aria-live={showScore ? undefined : 'polite'}>
+            <strong>{showScore ? entry.totalPoints : bonusVotes}</strong>
+            <span>{showScore ? 'points' : 'votes · for fun'}</span>
+          </div>}
         </header>
 
         <div className="appreciation-submitters">
@@ -76,6 +81,7 @@ export default function AppreciationSongCard({
           commentLikesIndex={commentLikesIndex}
           player={player}
           revealAuthors
+          bonus={bonus}
           songId={entry.canonical_song_id}
           onChanged={onChanged}
           roundId={roundId}

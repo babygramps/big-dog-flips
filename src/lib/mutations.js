@@ -4,7 +4,7 @@ import { supabase } from './supabase.js'
 import { SONG_SERVICES, songLinkError } from './songLinks.js'
 import { isMissingArtworkColumn, safeArtworkUrl } from './songArtwork.js'
 
-export async function saveSongSubmission({ roundId, playerId, form }) {
+export async function saveSongSubmission({ roundId, playerId, form, bonus = false, songId = null }) {
   const linkError = songLinkError(form)
   if (linkError) return { error: { message: linkError } }
   const row = {
@@ -18,7 +18,9 @@ export async function saveSongSubmission({ roundId, playerId, form }) {
     submitter_note: form.submitter_note.trim() || null,
     artwork_url: safeArtworkUrl(form.artwork_url) || null,
   }
-  const save = values => supabase.from('songs').upsert(values, { onConflict: 'round_id,player_id' })
+  const save = values => bonus
+    ? supabase.from('bonus_songs').upsert({ ...values, ...(songId ? { id: songId } : {}) }, { onConflict: 'id' })
+    : supabase.from('songs').upsert(values, { onConflict: 'round_id,player_id' })
   let { error } = await save(row)
   // Before the artwork migration is applied, save the song without its thumbnail.
   if (isMissingArtworkColumn(error)) {
@@ -68,8 +70,8 @@ export async function persistVote({ roundId, songId, playerId, points }) {
   if (error) throw error
 }
 
-export async function postComment({ roundId, songId, playerId, body, gifUrl = null, gifPreviewUrl = null, gifProvider = null, gifId = null }) {
-  const { error } = await supabase.from('comments').insert({
+export async function postComment({ roundId, songId, playerId, body, gifUrl = null, gifPreviewUrl = null, gifProvider = null, gifId = null, bonus = false }) {
+  const { error } = await supabase.from(bonus ? 'bonus_comments' : 'comments').insert({
     round_id: roundId,
     song_id: songId || null,
     player_id: playerId,
@@ -83,9 +85,9 @@ export async function postComment({ roundId, songId, playerId, body, gifUrl = nu
   return { error }
 }
 
-export async function deleteComment({ commentId, playerId }) {
+export async function deleteComment({ commentId, playerId, bonus = false }) {
   const { error } = await supabase
-    .from('comments')
+    .from(bonus ? 'bonus_comments' : 'comments')
     .delete()
     .eq('id', commentId)
     .eq('player_id', playerId)
@@ -93,10 +95,10 @@ export async function deleteComment({ commentId, playerId }) {
   return { error }
 }
 
-export async function toggleCommentLike({ commentId, playerId, liked }) {
+export async function toggleCommentLike({ commentId, playerId, liked, bonus = false }) {
   if (liked) {
     const { error } = await supabase
-      .from('comment_likes')
+      .from(bonus ? 'bonus_comment_likes' : 'comment_likes')
       .delete()
       .eq('comment_id', commentId)
       .eq('player_id', playerId)
@@ -104,7 +106,7 @@ export async function toggleCommentLike({ commentId, playerId, liked }) {
   }
 
   const { error } = await supabase
-    .from('comment_likes')
+    .from(bonus ? 'bonus_comment_likes' : 'comment_likes')
     .upsert({ comment_id: commentId, player_id: playerId }, { onConflict: 'comment_id,player_id' })
   return { error }
 }
@@ -203,7 +205,7 @@ export async function saveLeagueSettings({ form, rounds }) {
     league_name: form.league_name.trim() || 'Big Dog Flips',
     season_label: form.season_label.trim() || 'Season 2',
     points_per_player: Math.max(1, Number(form.points_per_player) || 3),
-    b_sides_enabled: form.b_sides_enabled === true,
+    b_sides_enabled: false,
     schedule_start_date: form.schedule_start_date || getCurrentMonday(),
     weekly_phase_template: normalizeTemplate(form.weekly_phase_template),
     timezone: 'America/Los_Angeles',
@@ -320,4 +322,18 @@ export async function redeemLateInvite(token, { form }) {
     p_token: token,
     p_song: { ...form, artwork_url: safeArtworkUrl(form.artwork_url) || null },
   })
+}
+
+export async function deleteBonusSong(songId, playerId) {
+  return supabase.from('bonus_songs').delete().eq('id', songId).eq('player_id', playerId)
+}
+
+export async function addBonusVote(roundId, songId, delta) {
+  const response = await fetch('/api/bonus-votes', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roundId, songId, delta }),
+  })
+  const result = await response.json()
+  if (!response.ok) throw new Error(result.error || 'Could not send your Side B vote.')
+  return result.totals
 }

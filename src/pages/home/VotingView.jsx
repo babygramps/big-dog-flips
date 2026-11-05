@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import Avatar from '../../components/Avatar.jsx'
 import SideRoster from '../../components/SideRoster.jsx'
-import SongLinks from '../../components/SongLinks.jsx'
-import SongArtwork from '../../components/SongArtwork.jsx'
+import VotingSongCard from './VotingSongCard.jsx'
 import useDebouncedVotes from '../../hooks/useDebouncedVotes.js'
 import { ANONYMOUS_COMMENT_AVATAR_URL, anonymousNameFor } from '../../lib/anonymousNames.js'
 import { groupLabel } from '../../lib/groups.js'
@@ -190,35 +189,10 @@ export default function VotingView({
               const songComments = commentsBySongId.get(song.id) || []
               const currentVote = draftVotes[song.id] || 0
               return (
-                <article className={`song-card voting-song-card ${isViewingOther ? 'is-no-vote' : ''} ${currentVote !== 0 ? 'has-votes' : ''}`} key={song.id}>
-                  <div className="voting-song-header">
-                    <div className="song-card-main">
-                      <SongArtwork song={song} />
-                      <div>
-                        <h2>{song.title}</h2>
-                        <p>{song.artist}{song.album ? ` · ${song.album}` : ''}</p>
-                      </div>
-                    </div>
-
-                    <SongLinks song={song} className="voting-song-actions" />
-
-                    {song.submitter_note && <p className="note">{song.submitter_note}</p>}
-                  </div>
-
-                  <CommentThread
-                    comments={songComments}
-                    commentLikes={commentLikes}
-                    commentLikesIndex={commentLikesIndex}
-                    player={player}
-                    revealAuthors={false}
-                    anonymousLabelFor={anonymousLabelFor}
-                    songId={song.id}
-                    onChanged={onChanged}
-                    roundId={round.id}
-                    compact
-                  />
-
-                  {!isViewingOther && (
+                <VotingSongCard key={song.id} song={song} player={player} roundId={round.id}
+                  comments={songComments} commentLikes={commentLikes} commentLikesIndex={commentLikesIndex}
+                  anonymousLabelFor={anonymousLabelFor} onChanged={onChanged} hasVotes={currentVote !== 0}
+                  voteControls={!isViewingOther && (
                     <div className="vote-control vote-column">
                       <button
                         type="button"
@@ -237,7 +211,7 @@ export default function VotingView({
                       >↓</button>
                     </div>
                   )}
-                </article>
+                />
               )
             })}
           </>

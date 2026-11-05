@@ -63,7 +63,22 @@ Keep the queue stocked ahead of the current week. `addRound` appends at the end 
 
 ## Round Sides
 
-Rounds default to one voting pool (Side A only). Admin can enable Side B with `league_settings.b_sides_enabled`; then a round with at least `MIN_PLAYERS_TO_SPLIT` active players is split into two balanced sides. Disabling Side B prevents new splits; already-split rounds keep their assignments and voting pools.
+New rounds have one scored voting pool (Side A). Side B is for unlimited extra
+songs after a player saves their scored pick, until voting starts. Extras are
+stored in `bonus_songs` and cannot enter votes, duplicate merges, or standings.
+Other players see them starting in voting. Side B uses the same voting and
+appreciation card components, submission form, and artwork lookup as Side A.
+Its comments and likes live in `bonus_comments` and `bonus_comment_likes`.
+
+Side B votes are unlimited anonymous shared counters in the app server's memory,
+served by `api/bonus-votes.js`. They reset on restart and expire seven days after
+the first vote. Display these totals during voting and appreciation; never save
+them as player ballots or include them in scoring. This requires the single
+shared app server, rather than independent serverless instances.
+
+The former Side B player-splitting feature is retired for new rounds. The
+`b_sides_enabled` setting stays false and `assign_round_groups` is a no-op.
+Existing split rounds retain their assignments and original scoring rules:
 
 - Sides live in `round_groups` and are assigned once, when the round becomes current. Whoever opens the app first writes them through the `assign_round_groups` RPC, which is first-writer-wins, so simultaneous clients cannot produce two different splits.
 - `src/lib/groups.js` picks the split by minimising how often the same pair lands together, which keeps season-long pairings even. Do not replace it with a plain shuffle.
@@ -71,7 +86,7 @@ Rounds default to one voting pool (Side A only). Admin can enable Side B with `l
 - Appreciation keeps one overall ranking, with the winner determined across both sides, but exposes each side's songs through the same Side A / Side B tabs. Its sidebar shows the final submission and voting status for every assigned player.
 - Duplicate merges may not span sides, enforced in both `create_duplicate_merge` and the admin tool.
 - Late joiners go to the smaller side via `join_round_group`. Sides are never rebalanced mid-round.
-- Below the threshold, or before the migration is applied, the round runs as a single pool exactly as it did before.
+- Unsplit rounds run as one scored voting pool.
 
 ## Voting
 
